@@ -4682,7 +4682,7 @@
     var val  = parseInt(((inp || {}).value || '0'), 10);
     if (!val || val < 1) { prev.textContent = ''; prev.style.color = '#3a3a3a'; return; }
     var ex60 = val * 60;
-    prev.textContent = 'z.B. 60 Sek. = ' + ex60 + ' SK';
+    prev.textContent = '1 Min = ' + ex60 + ' SlideKeys';
     prev.style.color = val >= _DEMO_OTHER_MIN_SK ? '#27ae60' : '#3a3a3a';
   };
 
@@ -4740,7 +4740,7 @@
           '<img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:13px;height:13px;">' +
           '<span style="font-size:15px;font-weight:800;color:#fff;">' + price + ' SK/Sek.</span>' +
         '</div>' +
-        '<div style="font-size:10.5px;color:#3a3a3a;margin-bottom:10px;">z.B. 60 Sek. = ' + ex60 + ' SK</div>' +
+        '<div style="font-size:10.5px;color:#3a3a3a;margin-bottom:10px;">1 Min = ' + ex60 + ' SlideKeys</div>' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
           '<div data-offer-status="' + offerId + '" style="font-size:10px;color:#484848;display:flex;align-items:center;gap:4px;">' +
             '<span>Läuft ab in</span>' +
