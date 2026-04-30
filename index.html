@@ -4824,11 +4824,7 @@
       el.innerHTML = '<span style="color:#27ae60;font-weight:600;">✓ Angenommen</span>';
     });
     document.querySelectorAll('[data-offer-accept="' + offerId + '"]').forEach(function(btn) {
-      btn.disabled         = true;
-      btn.style.background = '#0d2a0d';
-      btn.style.color      = '#27ae60';
-      btn.style.cursor     = 'default';
-      btn.style.filter     = '';
+      btn.style.display = 'none';
     });
     _startActiveCall(price);
   };
