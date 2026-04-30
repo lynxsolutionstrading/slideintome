@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "slideintoме",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Users\\Computer\\AppData\\Roaming\\npm\\node_modules\\live-server\\live-server.js", "--port=8080", "--no-browser"],
+      "port": 8080
+    }
+  ]
+}
