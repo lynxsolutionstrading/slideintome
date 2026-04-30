@@ -58,3 +58,26 @@ Everything lives in `index.html`. The UI has two main states:
 ### Login Flow (currently simulated)
 
 `handleLogin()` fakes authentication with a 2s timeout. Real Telegram Bot auth would replace this — the Telegram Login Widget or bot deep-link flow needs to be wired in, along with creator code validation on a backend API.
+
+## GitHub Push
+
+**Whenever the user writes "push" (or any variation like "push to github", "push changes" etc.), immediately run the following PowerShell commands without asking — no confirmation needed:**
+
+The GitHub token is stored locally in `.env` (gitignored). Read it from there.
+
+```powershell
+$env:PATH += ";C:\Program Files\Git\cmd"
+Set-Location "C:\Users\Computer\Desktop\Projekte\SlideInto.me\Slide_Code"
+$token = (Get-Content ".env" | Where-Object { $_ -match "^GITHUB_TOKEN=" }) -replace "^GITHUB_TOKEN=", ""
+git remote set-url origin "https://$token@github.com/lynxsolutionstrading/slideintome.git"
+git add -A
+$changes = git status --porcelain
+if ($changes) {
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm'
+    git commit -m "Update $timestamp"
+}
+git push origin master
+git remote set-url origin https://github.com/lynxsolutionstrading/slideintome.git
+```
+
+Then report which files were pushed and the commit hash.
