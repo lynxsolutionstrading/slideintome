@@ -4867,6 +4867,15 @@
       var cStr = _activeCall.totalCost + ' SK';
       if (timerEl) timerEl.textContent = tStr;
       if (costEl)  costEl.textContent  = cStr;
+      /* Deduct from balance in real-time */
+      _skBalance = Math.max(0, _skBalance - _activeCall.pricePerSec);
+      var balEl = document.getElementById('slideKeyBalance');
+      if (balEl) balEl.textContent = _formatSK(_skBalance);
+      /* Auto-end call when balance is exhausted */
+      if (_skBalance <= 0) {
+        _endActiveCall('Guthaben aufgebraucht — Anruf beendet');
+        return;
+      }
       /* Sync popout window if open */
       if (_callPopoutWin && !_callPopoutWin.closed) {
         try {
@@ -4881,7 +4890,7 @@
 
   window.endCall = function() { _endActiveCall(); };
 
-  function _endActiveCall() {
+  function _endActiveCall(overrideMsg) {
     if (!_activeCall) return;
     clearInterval(_activeCall.interval);
     var cost = _activeCall.totalCost;
@@ -4891,7 +4900,7 @@
     if (overlay) { overlay.style.display = 'none'; overlay.style.cursor = 'grab'; }
     if (_callPopoutWin && !_callPopoutWin.closed) { _callPopoutWin.close(); }
     _callPopoutWin = null;
-    showToast('Call beendet · ' + secs + ' Sek. · ' + cost + ' SK', 'Call');
+    showToast(overrideMsg || ('Call beendet · ' + secs + ' Sek. · ' + cost + ' SK'), 'Call');
   }
 
   /* ── Call popup: drag-and-drop ── */
