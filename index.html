@@ -975,6 +975,14 @@
         background: #1c1c1c; border-radius: 2px;
       }
 
+      /* Notification panel scrollbars */
+      #notifList::-webkit-scrollbar,
+      #notifSettingsList::-webkit-scrollbar { width: 3px; }
+      #notifList::-webkit-scrollbar-track,
+      #notifSettingsList::-webkit-scrollbar-track { background: transparent; }
+      #notifList::-webkit-scrollbar-thumb,
+      #notifSettingsList::-webkit-scrollbar-thumb { background: #1c1c1c; border-radius: 2px; }
+
       /* Contact row */
       .dcrm-contact {
         display: flex;
@@ -7161,7 +7169,7 @@
           </button>
         </div>
         <!-- Scrollable list -->
-        <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;">
+        <div id="notifList" style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1c1c1c transparent;">
 
           <!-- User notification 1 -->
           <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
@@ -7284,7 +7292,7 @@
           <div style="width:34px;"></div>
         </div>
         <!-- Settings body -->
-        <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;">
+        <div id="notifSettingsList" style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1c1c1c transparent;">
 
           <!-- Section label -->
           <div style="padding:18px 16px 8px;font-size:10px;font-weight:700;color:#333;letter-spacing:0.1em;text-transform:uppercase;">Benachrichtigungstypen</div>
