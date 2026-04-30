@@ -3993,3 +3993,11 @@
 [Auto-Deploy] ✗ Deploy failed: Command failed: netlify deploy --dir . --prod
  »   JSONHTTPError: Too Many Requests
 
+ »   JSONHTTPError: Too Many Requests
+[Auto-Deploy] ✗ Deploy failed: Command failed: netlify deploy --dir . --prod
+ »   JSONHTTPError: Too Many Requests
+
+ »   JSONHTTPError: Forbidden
+[Auto-Deploy] ✗ Deploy failed: Command failed: netlify deploy --dir . --prod
+ »   JSONHTTPError: Forbidden
+

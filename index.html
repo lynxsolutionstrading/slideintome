@@ -4838,11 +4838,11 @@
       overlay.style.display = 'flex';
       overlay.style.cursor = 'grab';
       overlay.style.userSelect = 'none';
-      /* Show popout on desktop, minimize on mobile */
+      /* Popout on desktop only; minimize on both desktop + mobile */
       var popoutBtn   = document.getElementById('callPopoutBtn');
       var minimizeBtn = document.getElementById('callMinimizeBtn');
       if (popoutBtn)   popoutBtn.style.display   = window.innerWidth >= 768 ? 'flex' : 'none';
-      if (minimizeBtn) minimizeBtn.style.display = window.innerWidth <  768 ? 'flex' : 'none';
+      if (minimizeBtn) minimizeBtn.style.display = 'flex';
       /* Compute initial position via JS (bottom-right on desktop, bottom-center on mobile) */
       requestAnimationFrame(function() {
         overlay.style.bottom = 'auto';
@@ -4904,7 +4904,8 @@
     var overlay = document.getElementById('activeCallPopup');
     if (overlay) { overlay.style.display = 'none'; overlay.style.cursor = 'grab'; }
     var dock = document.getElementById('callMiniDock');
-    if (dock) { dock.style.display = 'none'; dock.dataset.positioned = ''; }
+    if (dock) { dock.style.display = 'none'; }
+    _callMiniDockY = null;
     if (_callPopoutWin && !_callPopoutWin.closed) { _callPopoutWin.close(); }
     _callPopoutWin = null;
     showToast(overrideMsg || ('Call beendet · ' + secs + ' Sek. · ' + cost + ' SK'), 'Call');
@@ -4957,8 +4958,9 @@
     document.addEventListener('touchend', stopDrag);
   }
 
-  /* ── Call popup: minimize to right-edge dock (mobile) ── */
+  /* ── Call popup: minimize to right-edge dock ── */
   var _callMiniDrag = { active: false, startY: 0, startTop: 0, didDrag: false };
+  var _callMiniDockY = null; /* persists Y across app navigation; null = not yet placed */
 
   window.minimizeCall = function() {
     var popup = document.getElementById('activeCallPopup');
@@ -4966,10 +4968,12 @@
     if (!popup || !dock) return;
     popup.style.display = 'none';
     dock.style.display  = 'flex';
-    if (!dock.dataset.positioned) {
+    if (_callMiniDockY !== null) {
+      dock.style.top = _callMiniDockY + 'px';
+    } else {
       var dh = dock.offsetHeight || 90;
-      dock.style.top = Math.round((window.innerHeight - dh) / 2) + 'px';
-      dock.dataset.positioned = '1';
+      _callMiniDockY = Math.round((window.innerHeight - dh) / 2);
+      dock.style.top = _callMiniDockY + 'px';
     }
   };
 
@@ -4996,6 +5000,7 @@
       if (Math.abs(delta) > 4) _callMiniDrag.didDrag = true;
       var nt = Math.max(0, Math.min(_callMiniDrag.startTop + delta, window.innerHeight - dock.offsetHeight));
       dock.style.top = nt + 'px';
+      _callMiniDockY = nt;
     }
     function _miniEnd() {
       if (!_callMiniDrag.active) return;
@@ -7262,14 +7267,17 @@
   <!-- Subtle ambient glow inside card only -->
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 100% 60% at 50% 0%,rgba(192,57,43,0.08),transparent 70%);pointer-events:none;border-radius:20px;"></div>
 
-  <!-- Popout button (desktop only) -->
-  <button id="callPopoutBtn" onclick="openCallPopout();event.stopPropagation();" title="In eigenem Fenster öffnen" style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-  </button>
-  <!-- Minimize button (mobile only) -->
-  <button id="callMinimizeBtn" onclick="minimizeCall();event.stopPropagation();" title="Minimieren" style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-  </button>
+  <!-- Top-right button group: popout + minimize -->
+  <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;z-index:2;">
+    <!-- Popout button (desktop only) -->
+    <button id="callPopoutBtn" onclick="openCallPopout();event.stopPropagation();" title="In eigenem Fenster öffnen" style="width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </button>
+    <!-- Minimize button (desktop + mobile) -->
+    <button id="callMinimizeBtn" onclick="minimizeCall();event.stopPropagation();" title="Minimieren" style="width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:none;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.12)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
 
   <!-- Top row: avatar + name + status -->
   <div style="display:flex;align-items:center;gap:12px;width:100%;margin-bottom:16px;position:relative;">
