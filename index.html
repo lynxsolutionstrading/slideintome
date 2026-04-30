@@ -531,17 +531,6 @@
       100% { transform: scale(1.65); opacity: 0; }
     }
 
-    /* ─── Active call popup — mobile centering ─── */
-    @media (max-width: 767px) {
-      #activeCallPopup {
-        bottom: 24px !important;
-        right: 50% !important;
-        transform: translateX(50%) !important;
-        width: calc(100vw - 40px) !important;
-        max-width: 320px !important;
-      }
-    }
-
     /* ─── Active call avatar pulse ─── */
     @keyframes callPulse {
       0%,100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.45), 0 0 30px rgba(192,57,43,0.25); }
@@ -4846,12 +4835,24 @@
     var overlay = document.getElementById('activeCallPopup');
     if (overlay) {
       overlay.style.display = 'flex';
-      /* Position bottom-right using top/left so drag works immediately */
+      overlay.style.cursor = 'grab';
+      overlay.style.userSelect = 'none';
+      /* Hide popout button on mobile */
+      var popoutBtn = document.getElementById('callPopoutBtn');
+      if (popoutBtn) popoutBtn.style.display = window.innerWidth >= 768 ? 'flex' : 'none';
+      /* Compute initial position via JS (bottom-right on desktop, bottom-center on mobile) */
       requestAnimationFrame(function() {
         overlay.style.bottom = 'auto';
         overlay.style.right  = 'auto';
-        overlay.style.left   = (window.innerWidth  - overlay.offsetWidth  - 28) + 'px';
-        overlay.style.top    = (window.innerHeight - overlay.offsetHeight - 28) + 'px';
+        var isMobile = window.innerWidth < 768;
+        var w = overlay.offsetWidth || 270;
+        var h = overlay.offsetHeight || 320;
+        if (isMobile) {
+          overlay.style.left = Math.round((window.innerWidth - w) / 2) + 'px';
+        } else {
+          overlay.style.left = (window.innerWidth - w - 28) + 'px';
+        }
+        overlay.style.top = (window.innerHeight - h - 28) + 'px';
         _makeDraggable(overlay);
       });
     }
@@ -7183,7 +7184,7 @@
 </div>
 
 <!-- ── Active Call Popup (floating card) ── -->
-<div id="activeCallPopup" style="display:none;position:fixed;bottom:28px;right:28px;z-index:100001;width:270px;background:#0a0a0a;border:1px solid rgba(192,57,43,0.28);border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04),0 0 32px rgba(192,57,43,0.12);flex-direction:column;align-items:center;padding:22px 20px 20px;gap:0;font-family:'Inter',-apple-system,sans-serif;overflow:hidden;cursor:grab;user-select:none;">
+<div id="activeCallPopup" style="display:none;position:fixed;bottom:28px;right:28px;z-index:100001;width:270px;background:#0a0a0a;border:1px solid rgba(192,57,43,0.28);border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04),0 0 32px rgba(192,57,43,0.12);flex-direction:column;align-items:center;padding:22px 20px 20px;gap:0;font-family:'Inter',-apple-system,sans-serif;overflow:hidden;">
   <!-- Subtle ambient glow inside card only -->
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 100% 60% at 50% 0%,rgba(192,57,43,0.08),transparent 70%);pointer-events:none;border-radius:20px;"></div>
 
