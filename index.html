@@ -1568,7 +1568,10 @@
               <div style="font-size:11.5px;color:#555;line-height:1.7;">
                 Balance function:<br>
                 <span style="color:#3d8f3d;font-weight:600;">+(amount)</span> adds balance<br>
-                <span style="color:#8f3d3d;font-weight:600;">-(amount)</span> deducts balance
+                <span style="color:#8f3d3d;font-weight:600;">-(amount)</span> deducts balance<br><br>
+                Notification function:<br>
+                <span style="color:#3d8f3d;font-weight:600;">+not(amount)</span> adds notifications<br>
+                <span style="color:#8f3d3d;font-weight:600;">-not(amount)</span> deducts notifications
               </div>
             </div>
           </div>
@@ -2392,7 +2395,10 @@
           <div style="font-size:11.5px;color:#555;line-height:1.7;">
             Balance function:<br>
             <span style="color:#3d8f3d;font-weight:600;">+(amount)</span> adds balance<br>
-            <span style="color:#8f3d3d;font-weight:600;">-(amount)</span> deducts balance
+            <span style="color:#8f3d3d;font-weight:600;">-(amount)</span> deducts balance<br><br>
+            Notification function:<br>
+            <span style="color:#3d8f3d;font-weight:600;">+not(amount)</span> adds notifications<br>
+            <span style="color:#8f3d3d;font-weight:600;">-not(amount)</span> deducts notifications
           </div>
         </div>
       </div>
@@ -4568,9 +4574,38 @@
     _updateNotifBadge(0);
   };
 
+  /* ── Notification settings (slide-in page 2) ── */
+  var _notifTypeSettings = { user: true, post: true, payment: true, platform: true };
+
+  window.openNotifSettings = function() {
+    var slider = document.getElementById('notifSlider');
+    if (!slider) return;
+    slider.style.transition = 'transform 0.32s cubic-bezier(0.42,0,0.18,1.0)';
+    slider.style.transform  = 'translateX(-50%)';
+  };
+
+  window.closeNotifSettings = function() {
+    var slider = document.getElementById('notifSlider');
+    if (!slider) return;
+    slider.style.transition = 'transform 0.32s cubic-bezier(0.42,0,0.18,1.0)';
+    slider.style.transform  = 'translateX(0)';
+  };
+
+  window.toggleNotifSetting = function(type) {
+    _notifTypeSettings[type] = !_notifTypeSettings[type];
+    var isOn  = _notifTypeSettings[type];
+    var thumb = document.getElementById('notifToggle_' + type);
+    var track = document.getElementById('notifTrack_'  + type);
+    if (thumb) thumb.style.transform = isOn ? 'translateX(21px)' : 'translateX(3px)';
+    if (track) track.style.background = isOn ? '#c0392b' : '#2a2a2a';
+  };
+
   window.closeNotifications = function() {
     var panel = document.getElementById('notifPanel');
     if (!panel) return;
+    /* Reset slider to page 1 instantly so it's always at notifications on next open */
+    var slider = document.getElementById('notifSlider');
+    if (slider) { slider.style.transition = 'none'; slider.style.transform = 'translateX(0)'; }
     _notifStopTracking();
     var isDesktop = window.innerWidth >= 768;
     if (isDesktop) {
@@ -7107,113 +7142,191 @@
 <!-- ── Notifications Panel ── -->
 <div id="notifPanel" style="display:none;position:fixed;z-index:3000;background:#000;font-family:'Inter',-apple-system,sans-serif;overflow:hidden;flex-direction:column;align-items:flex-end;border-right:1px solid #1a1a1a;">
   <!-- Content: min-width prevents squishing — mirrors deskLeftContent pattern -->
-  <div id="notifPanelContent" style="min-width:375px;width:100%;flex-shrink:0;flex-grow:1;min-height:0;display:flex;flex-direction:column;">
+  <div id="notifPanelContent" style="min-width:375px;width:100%;flex-shrink:0;flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
 
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#000;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
-    <button onclick="closeNotifications()" style="width:34px;height:34px;border-radius:9px;background:#161616;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseenter="this.style.background='#222'" onmouseleave="this.style.background='#161616'">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 2.5L5 7.5L10 12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.01em;">Notification</div>
-    <div style="width:34px;"></div>
-  </div>
+    <!-- Horizontal slider — 200% wide, holds both pages side-by-side -->
+    <div id="notifSlider" style="display:flex;width:200%;flex:1;min-height:0;transform:translateX(0);transition:none;will-change:transform;">
 
-  <!-- Scrollable list -->
-  <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;">
+      <!-- ── PAGE 1: Notification list ── -->
+      <div style="width:50%;display:flex;flex-direction:column;flex-shrink:0;min-height:0;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#000;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+          <button onclick="closeNotifications()" style="width:34px;height:34px;border-radius:9px;background:#161616;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseenter="this.style.background='#222'" onmouseleave="this.style.background='#161616'">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 2.5L5 7.5L10 12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.01em;">Notification</div>
+          <!-- Gear / Settings button -->
+          <button onclick="openNotifSettings()" style="width:34px;height:34px;border-radius:9px;background:#161616;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseenter="this.style.background='#222'" onmouseleave="this.style.background='#161616'" title="Einstellungen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+        <!-- Scrollable list -->
+        <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;">
 
-    <!-- User notification 1 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-        <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
-      </div>
-    </div>
+          <!-- User notification 1 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
+            </div>
+          </div>
 
-    <!-- User notification 2 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-        <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
-      </div>
-    </div>
+          <!-- User notification 2 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
+            </div>
+          </div>
 
-    <!-- Post notification 1 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
-        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
-        <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts geht gerade viral</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein post hat viralitaslevel 5 erreicht. Herzlichen Gluckwunsch!</div>
-      </div>
-    </div>
+          <!-- Post notification 1 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
+              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts geht gerade viral</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein post hat viralitaslevel 5 erreicht. Herzlichen Gluckwunsch!</div>
+            </div>
+          </div>
 
-    <!-- Post notification 2 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
-        <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
-        <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts wurde uberdurchschnittlich oft</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein Post wurde bereits 100 mal entsperrt. Herzlichen Gluck...</div>
-      </div>
-    </div>
+          <!-- Post notification 2 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
+              <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts wurde uberdurchschnittlich oft</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein Post wurde bereits 100 mal entsperrt. Herzlichen Gluck...</div>
+            </div>
+          </div>
 
-    <!-- Payment notification 1 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
-        <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Dein Kauf war erfolgreich</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 2000 neue SlideKeys gekauft. Viel Spass!</div>
-      </div>
-    </div>
+          <!-- Payment notification 1 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
+              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Dein Kauf war erfolgreich</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 2000 neue SlideKeys gekauft. Viel Spass!</div>
+            </div>
+          </div>
 
-    <!-- Payment notification 2 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
-        <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Deine Auszahlung war erfolgreich</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 3000 SlideKeys auszahlen lassen (30$)</div>
-      </div>
-    </div>
+          <!-- Payment notification 2 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
+              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Deine Auszahlung war erfolgreich</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 3000 SlideKeys auszahlen lassen (30$)</div>
+            </div>
+          </div>
 
-    <!-- Platform notification 1 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-      <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
-        <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Wartungsarbeiten</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Heute von 14.00 Uhr bis 16.00 Uhr ist die Webseite nicht erreichbar.</div>
-      </div>
-    </div>
+          <!-- Platform notification 1 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
+              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Wartungsarbeiten</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Heute von 14.00 Uhr bis 16.00 Uhr ist die Webseite nicht erreichbar.</div>
+            </div>
+          </div>
 
-    <!-- Platform notification 2 -->
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;">
-      <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
-        <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Neues Feature jetzt LIVE</div>
-        <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du kannst jetzt SlideKeys an andere user senden. Probier es aus!</div>
-      </div>
-    </div>
+          <!-- Platform notification 2 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
+              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Neues Feature jetzt LIVE</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du kannst jetzt SlideKeys an andere user senden. Probier es aus!</div>
+            </div>
+          </div>
 
-  </div>
+        </div><!-- /scrollable list -->
+      </div><!-- /page 1 -->
+
+      <!-- ── PAGE 2: Notification settings ── -->
+      <div style="width:50%;display:flex;flex-direction:column;flex-shrink:0;min-height:0;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#000;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+          <button onclick="closeNotifSettings()" style="width:34px;height:34px;border-radius:9px;background:#161616;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseenter="this.style.background='#222'" onmouseleave="this.style.background='#161616'">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 2.5L5 7.5L10 12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.01em;">Einstellungen</div>
+          <div style="width:34px;"></div>
+        </div>
+        <!-- Settings body -->
+        <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;">
+
+          <!-- Section label -->
+          <div style="padding:18px 16px 8px;font-size:10px;font-weight:700;color:#333;letter-spacing:0.1em;text-transform:uppercase;">Benachrichtigungstypen</div>
+
+          <!-- User notifications toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="flex:1;min-width:0;padding-right:14px;">
+              <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;">User Notifications</div>
+              <div style="font-size:11px;color:#444;line-height:1.45;">Wenn dir jemand einen Tip sendet oder folgt</div>
+            </div>
+            <div id="notifTrack_user" onclick="toggleNotifSetting('user')" style="width:44px;height:26px;border-radius:13px;background:#c0392b;cursor:pointer;position:relative;flex-shrink:0;transition:background 0.22s;">
+              <div id="notifToggle_user" style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transform:translateX(21px);transition:transform 0.22s;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+            </div>
+          </div>
+
+          <!-- Post notifications toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="flex:1;min-width:0;padding-right:14px;">
+              <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;">Post Notifications</div>
+              <div style="font-size:11px;color:#444;line-height:1.45;">Viralitaet, Entsperrungen und Post-Aktivitaet</div>
+            </div>
+            <div id="notifTrack_post" onclick="toggleNotifSetting('post')" style="width:44px;height:26px;border-radius:13px;background:#c0392b;cursor:pointer;position:relative;flex-shrink:0;transition:background 0.22s;">
+              <div id="notifToggle_post" style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transform:translateX(21px);transition:transform 0.22s;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+            </div>
+          </div>
+
+          <!-- Payment notifications toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="flex:1;min-width:0;padding-right:14px;">
+              <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;">Payment Notifications</div>
+              <div style="font-size:11px;color:#444;line-height:1.45;">Kaeufe, Auszahlungen und SlideKey-Transaktionen</div>
+            </div>
+            <div id="notifTrack_payment" onclick="toggleNotifSetting('payment')" style="width:44px;height:26px;border-radius:13px;background:#c0392b;cursor:pointer;position:relative;flex-shrink:0;transition:background 0.22s;">
+              <div id="notifToggle_payment" style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transform:translateX(21px);transition:transform 0.22s;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+            </div>
+          </div>
+
+          <!-- Platform notifications toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="flex:1;min-width:0;padding-right:14px;">
+              <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;">Platform Notifications</div>
+              <div style="font-size:11px;color:#444;line-height:1.45;">Wartung, neue Features und Systemmeldungen</div>
+            </div>
+            <div id="notifTrack_platform" onclick="toggleNotifSetting('platform')" style="width:44px;height:26px;border-radius:13px;background:#c0392b;cursor:pointer;position:relative;flex-shrink:0;transition:background 0.22s;">
+              <div id="notifToggle_platform" style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transform:translateX(21px);transition:transform 0.22s;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+            </div>
+          </div>
+
+          <!-- Divider + all-off hint -->
+          <div style="padding:20px 16px 12px;">
+            <div style="font-size:10.5px;color:#2e2e2e;line-height:1.6;">Deaktivierte Benachrichtigungen werden nicht mehr angezeigt. Du kannst sie jederzeit wieder aktivieren.</div>
+          </div>
+
+        </div><!-- /settings body -->
+      </div><!-- /page 2 -->
+
+    </div><!-- /notifSlider -->
   </div><!-- /notifPanelContent -->
 </div><!-- /notifPanel -->
 
