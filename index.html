@@ -4481,21 +4481,39 @@
     var isDesktop = window.innerWidth >= 768;
 
     if (isDesktop) {
-      var deskLeft = document.getElementById('deskLeft');
-      var isClosed = deskLeft && deskLeft.offsetWidth < 200;
+      var deskLeft  = document.getElementById('deskLeft');
+      var isClosed  = deskLeft && deskLeft.offsetWidth < 200;
+      var NOTIF_MIN = 375;   /* content minimum — must be fully visible on open */
 
-      /* If profile panel is closed — open it first, then show notification
-         simultaneously so both animate in together (no lag appearance) */
-      if (isClosed) {
-        deskOpenLeftPanel();           /* starts 0.28s width animation */
+      if (isClosed && deskLeft) {
+        /* Open deskLeft to NOTIF_MIN so notifications are never clipped on open.
+           Mirror deskOpenLeftPanel logic (profile code untouched) but target
+           375px so content fits without left-side crop on first open. */
+        var fade = document.getElementById('deskLeftFade');
+        if (fade) { fade.style.transition = 'none'; fade.style.opacity = '1'; fade.style.pointerEvents = 'none'; }
+        deskLeft.style.transition = 'width 0.28s cubic-bezier(0.42,0,0.18,1.0)';
+        deskLeft.style.width      = NOTIF_MIN + 'px';
+        deskLeft.style.opacity    = '1';
+        setTimeout(function() {
+          deskLeft.style.transition = '';
+          if (fade) { fade.style.transition = 'opacity 1s ease'; fade.style.opacity = '0'; }
+        }, 320);
+        /* Position notification panel at final target immediately — no waiting for first ResizeObserver tick */
+        var topH = 58;
+        panel.style.left   = '0px';
+        panel.style.top    = topH + 'px';
+        panel.style.width  = NOTIF_MIN + 'px';
+        panel.style.height = (window.innerHeight - topH) + 'px';
+        var contentEl = document.getElementById('notifPanelContent');
+        if (contentEl) contentEl.style.width = NOTIF_MIN + 'px';
       }
 
-      /* Show panel immediately — ResizeObserver keeps it in sync during animation */
-      panel.style.display = 'flex';
-      panel.style.opacity = '0';
+      /* Show panel — ResizeObserver keeps it glued during user drag */
+      panel.style.display    = 'flex';
+      panel.style.opacity    = '0';
       panel.style.transition = 'opacity 0.2s ease';
-      _notifSyncRect();               /* initial snap */
-      _notifStartTracking();          /* live follow on every pixel of drag */
+      if (!isClosed) _notifSyncRect();   /* initial snap when profile already open */
+      _notifStartTracking();
       requestAnimationFrame(function() { panel.style.opacity = '1'; });
 
     } else {
