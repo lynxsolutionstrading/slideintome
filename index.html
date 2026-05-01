@@ -4602,10 +4602,35 @@
         + '</div></div>';
     }
 
+    function _nRowNew(p) {
+      return '<div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;border-left:2px solid rgba(192,57,43,0.55);background:rgba(192,57,43,0.04);">'
+        + _nAvatar(p)
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
+        + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
+        + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
+        + '</div></div>';
+    }
+
     function _nBatch(n) {
       var h = '';
       for (var i = 0; i < n; i++) { h += _nRow(_NP[_ni % _NP.length]); _ni++; }
       return h;
+    }
+
+    function _nNewHeader(count) {
+      return '<div style="display:flex;align-items:center;gap:9px;padding:9px 16px 9px 14px;background:rgba(192,57,43,0.08);border-bottom:1px solid rgba(192,57,43,0.18);border-left:2px solid #c0392b;">'
+        + '<div style="width:7px;height:7px;border-radius:50%;background:#c0392b;flex-shrink:0;box-shadow:0 0 7px rgba(192,57,43,0.8);"></div>'
+        + '<span style="font-size:11px;font-weight:700;color:#c0392b;letter-spacing:0.06em;text-transform:uppercase;">'+count+' Neue Benachrichtigungen</span>'
+        + '</div>';
+    }
+
+    function _nOlderDivider() {
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #111;">'
+        + '<div style="flex:1;height:1px;background:linear-gradient(to right,transparent,#1e1e1e);"></div>'
+        + '<span style="font-size:9.5px;font-weight:700;color:#2e2e2e;letter-spacing:0.12em;text-transform:uppercase;flex-shrink:0;">Ältere</span>'
+        + '<div style="flex:1;height:1px;background:linear-gradient(to left,transparent,#1e1e1e);"></div>'
+        + '</div>';
     }
 
     function _nLoadMore(list, sentinel) {
@@ -4620,12 +4645,29 @@
       }, 2000);
     }
 
-    window._notifInfiniteInit = function() {
+    window._notifInfiniteInit = function(newCount) {
+      var n = Math.min(newCount || 0, 20);
       var list = document.getElementById('notifList');
       if (!list) return;
       _ni = 0; _nloading = false;
-      /* Build first 20 rows + sentinel */
-      list.innerHTML = _nBatch(20);
+
+      var html = '';
+      if (n > 0) {
+        /* New notifications section */
+        html += _nNewHeader(n);
+        for (var i = 0; i < n; i++) { html += _nRowNew(_NP[_ni % _NP.length]); _ni++; }
+        /* Older divider + remaining rows to reach 20 total */
+        var older = Math.max(0, 20 - n);
+        if (older > 0) {
+          html += _nOlderDivider();
+          for (var j = 0; j < older; j++) { html += _nRow(_NP[_ni % _NP.length]); _ni++; }
+        }
+      } else {
+        /* No unread — plain list, no separator */
+        html = _nBatch(20);
+      }
+
+      list.innerHTML = html;
       var sentinel = document.createElement('div');
       sentinel.id = 'notifSentinel';
       sentinel.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:16px;min-height:56px;';
@@ -4732,8 +4774,8 @@
       requestAnimationFrame(function() { panel.style.transform = 'translateY(0)'; });
     }
 
-    /* Init / reset notification infinite scroll */
-    _notifInfiniteInit();
+    /* Init / reset notification infinite scroll — pass current unread count */
+    _notifInfiniteInit(_notifCount);
 
     /* Clear badge */
     _updateNotifBadge(0);
