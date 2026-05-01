@@ -3444,6 +3444,10 @@
     if (inp) inp.value = '';
     filterContacts('');
     showView('chat');
+    setTimeout(function() {
+      var s = document.getElementById('chatScroll');
+      if (s) s.scrollTop = s.scrollHeight;
+    }, 60);
   }
 
   // -- Contacts data --
@@ -6395,8 +6399,8 @@
       return;
     }
 
-    // ── Dev notification commands: +not(N) or -not(N) ──
-    var _notCmd = text.match(/^([+\-])not\((\d+)\)$/i);
+    // ── Dev notification commands: +not(N), -not(N), +notN, -notN ──
+    var _notCmd = text.match(/^([+\-])not\(?(\d+)\)?$/i);
     if (_notCmd) {
       var _nAmt = parseInt(_notCmd[2], 10);
       if (_notCmd[1] === '+') {
