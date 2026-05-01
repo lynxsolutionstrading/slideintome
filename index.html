@@ -153,12 +153,6 @@
       transform: rotate(45deg);
     }
 
-    /* Settings back arrow: visible on mobile, hidden on desktop */
-    .settings-back-btn { display: flex; }
-    @media (min-width: 768px) {
-      .settings-back-btn { display: none !important; }
-    }
-
     .age-gate-text {
       font-size: 10.5px;
       color: #888888;
@@ -2578,20 +2572,11 @@
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 13px;background:#000;border-bottom:1px solid #141414;flex-shrink:0;">
-      <!-- Back arrow — mobile only -->
-      <button onclick="settingsGoBack()" class="settings-back-btn" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#1a0505;border:1.5px solid #5a1010;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.18s,border-color 0.18s;" onmouseenter="this.style.background='#2a0808';this.style.borderColor='#c0392b'" onmouseleave="this.style.background='#1a0505';this.style.borderColor='#5a1010'">
-        <svg width="16" height="12" viewBox="0 0 18 12" fill="none"><path d="M16 6H2M2 6L7 1M2 6L7 11" stroke="#c0392b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
       <span style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.02em;">Settings</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button onclick="showView('cloud')" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid #252525;border-radius:20px;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#666;transition:border-color 0.18s,color 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#ddd'" onmouseleave="this.style.borderColor='#252525';this.style.color='#666'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-          Cloud
-        </button>
-        <button onclick="settingsGoBack()" style="width:32px;height:32px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background='#222';this.style.borderColor='#444'" onmouseleave="this.style.background='#181818';this.style.borderColor='#252525'">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
+      <button onclick="showView('cloud')" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid #252525;border-radius:20px;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#666;transition:border-color 0.18s,color 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#ddd'" onmouseleave="this.style.borderColor='#252525';this.style.color='#666'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Cloud
+      </button>
     </div>
 
     <!-- Scrollable content -->
