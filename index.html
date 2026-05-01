@@ -1405,7 +1405,7 @@
       </div>
 
       <!-- IMAGE GRID (scrollable) — identical to mobile -->
-      <div id="deskGridScroll" class="grid-scroll" style="flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;background:#000;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;">
+      <div id="deskGridScroll" class="grid-scroll" style="flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;background:#000;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;position:relative;">
         <div id="deskImageGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.2s ease;"></div>
       </div>
 
@@ -3624,15 +3624,46 @@
     }).join('');
   }
 
-  /* ── Switch tab in the desktop left panel ── */
+  /* ── Switch tab in the desktop left panel (same slide animation as mobile) ── */
+  var _deskAnimating = false;
   function deskSwitchTab(tab) {
-    if (tab === _deskCurrentTab) return;
+    if (tab === _deskCurrentTab || _deskAnimating) return;
+    _deskAnimating = true;
+    var _deskTabOrder = ['instagram','twitter','tiktok'];
+    var oldIdx = _deskTabOrder.indexOf(_deskCurrentTab);
+    var newIdx = _deskTabOrder.indexOf(tab);
+    var dir = newIdx > oldIdx ? 1 : -1;
     _deskCurrentTab = tab;
-    ['instagram','twitter','tiktok'].forEach(function(t) {
+
+    /* Update tab button styles */
+    _deskTabOrder.forEach(function(t) {
       var btn = document.getElementById('dtab-' + t);
       if (btn) btn.classList.toggle('active', t === tab);
     });
-    deskBuildGrid(tab);
+
+    var grid = document.getElementById('deskImageGrid');
+    if (!grid) { _deskAnimating = false; return; }
+
+    /* Slide current grid OUT */
+    grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
+    grid.style.transform  = 'translateX(' + (-dir * 100) + '%)';
+    grid.style.opacity    = '0';
+
+    setTimeout(function() {
+      /* Reposition off-screen on the other side, then build new content */
+      grid.style.transition = 'none';
+      grid.style.transform  = 'translateX(' + (dir * 100) + '%)';
+      deskBuildGrid(tab);
+      grid.getBoundingClientRect(); /* force reflow */
+      /* Scroll back to top */
+      var scroller = document.getElementById('deskGridScroll');
+      if (scroller) scroller.scrollTop = 0;
+      /* Slide new grid IN */
+      grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
+      grid.style.transform  = 'translateX(0)';
+      grid.style.opacity    = '1';
+      setTimeout(function() { _deskAnimating = false; }, 340);
+    }, 240);
   }
 
   /* ── Open a chat in the right desktop panel ── */
