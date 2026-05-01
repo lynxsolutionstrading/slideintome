@@ -4540,6 +4540,98 @@
     }
   };
 
+  /* ── Notification infinite-scroll ── */
+  (function() {
+    var _NP = [
+      { t:'user', img:'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&q=80', title:'User notification', sub:'Firstname Lastname', sc:'#c0392b', body:'Hat dir 350 SlideKeys als Tip gesendet. Bedanke dich bei ihm/ihr!' },
+      { t:'user', img:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80', title:'User notification', sub:'Firstname Lastname', sc:'#c0392b', body:'Hat dir 180 SlideKeys als Tip gesendet. Herzlichen Dank!' },
+      { t:'post', img:'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80', title:'Post notification', sub:'Einer deiner Posts geht gerade viral', sc:'#c0392b', body:'Dein Post hat Viralitatslevel 5 erreicht. Herzlichen Gluckwunsch!' },
+      { t:'post', img:'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&q=80', title:'Post notification', sub:'Einer deiner Posts wurde uberdurchschnittlich oft', sc:'#c0392b', body:'Dein Post wurde bereits 100 mal entsperrt. Herzlichen Gluck...' },
+      { t:'pay', title:'Payment notification', sub:'Dein Kauf war erfolgreich', sc:'#27ae60', body:'Du hast dir erfolgreich 2000 neue SlideKeys gekauft. Viel Spass!' },
+      { t:'pay', title:'Payment notification', sub:'Deine Auszahlung war erfolgreich', sc:'#27ae60', body:'Du hast dir erfolgreich 3000 SlideKeys auszahlen lassen (30$).' },
+      { t:'plat', title:'Platform notification', sub:'Wartungsarbeiten', sc:'#666', body:'Heute von 14.00 Uhr bis 16.00 Uhr ist die Webseite nicht erreichbar.' },
+      { t:'user', img:'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80', title:'User notification', sub:'Firstname Lastname', sc:'#c0392b', body:'Hat deinen Post entsperrt und dir 120 SlideKeys gesendet.' },
+      { t:'post', img:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&h=80&fit=crop&q=80', title:'Post notification', sub:'Dein Post erreicht neue Follower', sc:'#c0392b', body:'Dein neuester Post wurde bereits 50 mal angesehen. Weiter so!' },
+      { t:'pay', title:'Payment notification', sub:'Tip erhalten', sc:'#27ae60', body:'Du hast 500 SlideKeys als Tip erhalten. Viel Spass damit!' },
+      { t:'user', img:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&q=80', title:'User notification', sub:'Firstname Lastname', sc:'#c0392b', body:'Folgt dir jetzt. Schau dir sein Profil an!' },
+      { t:'plat', title:'Platform notification', sub:'SlideInto.me Version 1.4', sc:'#666', body:'Wir haben das App mit neuen Features aktualisiert. Viel Spass!' },
+      { t:'plat', title:'Platform notification', sub:'Neues Feature jetzt LIVE', sc:'#666', body:'Du kannst jetzt SlideKeys an andere User senden. Probier es aus!' },
+      { t:'user', img:'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&q=80', title:'User notification', sub:'Firstname Lastname', sc:'#c0392b', body:'Hat dein Profil besucht und 75 SlideKeys hinterlassen.' },
+      { t:'post', img:'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80', title:'Post notification', sub:'Dein Post wird weiterempfohlen', sc:'#c0392b', body:'Jemand hat deinen Post geteilt. Neuer Reichweite-Bonus erhalten!' },
+      { t:'pay', title:'Payment notification', sub:'Bonus gutgeschrieben', sc:'#27ae60', body:'Du hast einen Willkommens-Bonus von 100 SlideKeys erhalten!' },
+    ];
+
+    var _SVG_DOLLAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+    var _SVG_GEAR   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+
+    var _ni = 0, _nloading = false, _nbound = false;
+
+    function _nAvatar(p) {
+      if (p.t === 'user') {
+        return '<img src="'+p.img+'" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">';
+      } else if (p.t === 'post') {
+        return '<div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover;"></div>';
+      } else if (p.t === 'pay') {
+        return '<div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">'+_SVG_DOLLAR+'</div>';
+      } else {
+        return '<div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">'+_SVG_GEAR+'</div>';
+      }
+    }
+
+    function _nRow(p) {
+      return '<div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">'
+        + _nAvatar(p)
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
+        + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
+        + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
+        + '</div></div>';
+    }
+
+    function _nBatch(n) {
+      var h = '';
+      for (var i = 0; i < n; i++) { h += _nRow(_NP[_ni % _NP.length]); _ni++; }
+      return h;
+    }
+
+    function _nLoadMore(list, sentinel) {
+      _nloading = true;
+      sentinel.innerHTML = '<div style="width:24px;height:24px;border-radius:50%;border:2px solid rgba(192,57,43,0.2);border-top-color:#c0392b;animation:cspSpin 0.75s linear infinite;flex-shrink:0;"></div>';
+      setTimeout(function() {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = _nBatch(20);
+        while (tmp.firstChild) list.insertBefore(tmp.firstChild, sentinel);
+        sentinel.innerHTML = '';
+        _nloading = false;
+      }, 2000);
+    }
+
+    window._notifInfiniteInit = function() {
+      var list = document.getElementById('notifList');
+      if (!list) return;
+      _ni = 0; _nloading = false;
+      /* Build first 20 rows + sentinel */
+      list.innerHTML = _nBatch(20);
+      var sentinel = document.createElement('div');
+      sentinel.id = 'notifSentinel';
+      sentinel.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:16px;min-height:56px;';
+      list.appendChild(sentinel);
+      list.scrollTop = 0;
+      /* Wire scroll once per list lifetime */
+      if (!_nbound) {
+        _nbound = true;
+        list.addEventListener('scroll', function() {
+          if (_nloading) return;
+          var s = document.getElementById('notifSentinel');
+          if (!s) return;
+          if (list.scrollTop + list.clientHeight >= list.scrollHeight - 50) {
+            _nLoadMore(list, s);
+          }
+        }, { passive: true });
+      }
+    };
+  })();
+
   /* Keep notifPanel + its content wrapper glued to deskLeft whenever it resizes */
   function _notifSyncRect() {
     var panel    = document.getElementById('notifPanel');
@@ -4626,9 +4718,8 @@
       requestAnimationFrame(function() { panel.style.transform = 'translateY(0)'; });
     }
 
-    /* Scroll list back to top */
-    var list = panel.querySelector('div[style*="overflow-y"]');
-    if (list) list.scrollTop = 0;
+    /* Init / reset notification infinite scroll */
+    _notifInfiniteInit();
 
     /* Clear badge */
     _updateNotifBadge(0);
@@ -7515,154 +7606,8 @@
         </div>
         <!-- Scrollable list -->
         <div id="notifList" style="flex:1;overflow-y:auto;scrollbar-width:none;touch-action:pan-y;">
-
-          <!-- User notification 1 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
-            </div>
-          </div>
-
-          <!-- User notification 2 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat dir 350 SlideKeys als tip gesendet. Bedanke dich bei ihm/ihr!</div>
-            </div>
-          </div>
-
-          <!-- Post notification 1 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
-              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts geht gerade viral</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein post hat viralitaslevel 5 erreicht. Herzlichen Gluckwunsch!</div>
-            </div>
-          </div>
-
-          <!-- Post notification 2 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid #252525;">
-              <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&q=80" style="width:100%;height:100%;object-fit:cover;">
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Einer deiner Posts wurde uberdurchschnittlich oft</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein Post wurde bereits 100 mal entsperrt. Herzlichen Gluck...</div>
-            </div>
-          </div>
-
-          <!-- Payment notification 1 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
-              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Dein Kauf war erfolgreich</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 2000 neue SlideKeys gekauft. Viel Spass!</div>
-            </div>
-          </div>
-
-          <!-- Payment notification 2 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #27ae60;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
-              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Deine Auszahlung war erfolgreich</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast dir erfolgreich 3000 SlideKeys auszahlen lassen (30$)</div>
-            </div>
-          </div>
-
-          <!-- Platform notification 1 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
-              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Wartungsarbeiten</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Heute von 14.00 Uhr bis 16.00 Uhr ist die Webseite nicht erreichbar.</div>
-            </div>
-          </div>
-
-          <!-- User notification 3 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat deinen Post entsperrt und dir 120 SlideKeys gesendet.</div>
-            </div>
-          </div>
-
-          <!-- Post notification 3 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Dein Post erreicht neue Follower</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein neuester Post wurde bereits 50 mal angesehen. Weiter so!</div>
-            </div>
-          </div>
-
-          <!-- Payment notification 3 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #1a3d1a;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
-              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Tip erhalten</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast 500 SlideKeys als Tip erhalten. Viel Spass damit!</div>
-            </div>
-          </div>
-
-          <!-- User notification 4 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
-              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Folgt dir jetzt. Schau dir sein Profil an!</div>
-            </div>
-          </div>
-
-          <!-- Platform notification 3 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
-              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">SlideInto.me Version 1.4</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Wir haben das App mit neuen Features aktualisiert. Viel Spass!</div>
-            </div>
-          </div>
-
-          <!-- Platform notification 2 -->
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;">
-            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
-              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Neues Feature jetzt LIVE</div>
-              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du kannst jetzt SlideKeys an andere user senden. Probier es aus!</div>
-            </div>
-          </div>
-
-</div><!-- /scrollable list -->
+          <!-- populated dynamically by _notifInfiniteInit() -->
+        </div><!-- /scrollable list -->
       </div><!-- /page 1 -->
 
       <!-- ── PAGE 2: Notification settings ── -->
