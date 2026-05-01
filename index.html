@@ -2807,18 +2807,32 @@
     } else if (name === 'chat') {
       chatPreviousView = currentView;
       currentView = 'chat';
-      // Only slide messages out if we're actually coming from the messages list
       if (chatPreviousView === 'messages') {
+        // Messages exits left as chat slides in from right
         messages.style.transform = 'translateX(-100%)';
+      } else if (chatPreviousView === 'saved') {
+        // Reverse push: saved exits right as chat comes back from left
+        saved.style.transform = 'translateX(100%)';
       }
       chat.style.transform      = 'translateX(0)';
       navChatIcon.style.opacity = '1';
     } else if (name === 'saved') {
+      savedPreviousView = currentView;
       currentView = 'saved';
-      profile.style.transform  = 'translateX(-100%)';
-      saved.style.transform    = 'translateX(0)';
-      messages.style.transform = 'translateX(100%)';
-      chat.style.transform     = 'translateX(100%)';
+      var _sSlideT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      var _sfromEl = { profile: profile, chat: chat, messages: messages }[savedPreviousView] || profile;
+      // Snap every background view (not the one we're leaving) to off-screen-right,
+      // without animation, so they don't ghost-slide through the visible area.
+      [profile, messages, chat].forEach(function(el) {
+        if (el === _sfromEl) return;
+        var _t = el.style.transition;
+        el.style.transition = 'none';
+        el.style.transform  = 'translateX(100%)';
+        void el.offsetWidth;
+        el.style.transition = _t || _sSlideT;
+      });
+      _sfromEl.style.transform = 'translateX(-100%)'; // current view exits left
+      saved.style.transform    = 'translateX(0)';     // saved enters from right
       // Consume pending query (set by openSavedFromChat), or reset to empty
       var _pendingQ = _sfQueryOnOpen || '';
       _sfQueryOnOpen = null;
@@ -2840,6 +2854,18 @@
       // profile (default)
       var prevView = currentView;
       currentView = 'profile';
+      // Snap any views parked off-screen-left (-100%) to off-screen-right without animation
+      // to prevent ghost slides across the visible area when returning to profile
+      var _pSlideT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      [saved, messages, chat].forEach(function(el) {
+        if (el.style.transform.indexOf('-100%') !== -1) {
+          var _pt = el.style.transition;
+          el.style.transition = 'none';
+          el.style.transform  = 'translateX(100%)';
+          void el.offsetWidth;
+          el.style.transition = _pt || _pSlideT;
+        }
+      });
       saved.style.transform          = 'translateX(100%)';
       chat.style.transform           = 'translateX(100%)';
       profile.style.transform        = 'translateX(0)';
@@ -2850,12 +2876,11 @@
         messages.style.transform = 'translateX(-100%)';
       } else if (prevView === 'chat') {
         // Messages is parked off-left from when we entered chat — snap it to the right
-        // instantly so it doesn't slide across the screen as a ghost panel
         var _mt = messages.style.transition;
         messages.style.transition = 'none';
         messages.style.transform  = 'translateX(100%)';
-        void messages.offsetWidth; // force reflow
-        messages.style.transition = _mt;
+        void messages.offsetWidth;
+        messages.style.transition = _mt || _pSlideT;
       } else {
         messages.style.transform = 'translateX(100%)';
       }
@@ -3810,24 +3835,24 @@
 
   // ── Saved content builder ──
   const savedItemsMeta = [
-    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'Anna_K',    price:0   },
-    { bg:'linear-gradient(160deg,#1a1e28,#101418)', creator:'BenXFire',  price:250 },
-    { bg:'linear-gradient(160deg,#1e1a1a,#140f0f)', creator:'CaroM',     price:0   },
-    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'DivaRose',  price:150 },
-    { bg:'linear-gradient(160deg,#1c2218,#101410)', creator:'EvaLuna',   price:0   },
-    { bg:'linear-gradient(160deg,#221c1c,#141010)', creator:'FionaX',    price:300 },
-    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'GiaRed',   price:0   },
-    { bg:'linear-gradient(160deg,#1e2030,#0f1020)', creator:'AnnaB',     price:200 },
-    { bg:'linear-gradient(160deg,#201a1e,#120f12)', creator:'HazelK',    price:0   },
-    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'IliaV',     price:120 },
-    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'JessM',     price:0   },
-    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'KaylaS',   price:450 },
-    { bg:'linear-gradient(160deg,#201e1a,#130f0a)', creator:'AngelFire', price:0   },
-    { bg:'linear-gradient(160deg,#1a2020,#0f1414)', creator:'LeonaX',   price:180 },
-    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'MiaRed',    price:0   },
-    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'NoraBlue',  price:100 },
-    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'OlivaM',   price:0   },
-    { bg:'linear-gradient(160deg,#221e1e,#141010)', creator:'PiaK',      price:220 },
+    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'KGSYUS', price:0   },
+    { bg:'linear-gradient(160deg,#1a1e28,#101418)', creator:'ANNSMI', price:250 },
+    { bg:'linear-gradient(160deg,#1e1a1a,#140f0f)', creator:'BIAROS', price:0   },
+    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'CHROSE', price:150 },
+    { bg:'linear-gradient(160deg,#1c2218,#101410)', creator:'DIAMUL', price:0   },
+    { bg:'linear-gradient(160deg,#221c1c,#141010)', creator:'EMMWAT', price:300 },
+    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'KGSYUS', price:0  },
+    { bg:'linear-gradient(160deg,#1e2030,#0f1020)', creator:'ANNSMI', price:200 },
+    { bg:'linear-gradient(160deg,#201a1e,#120f12)', creator:'BIAROS', price:0   },
+    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'CHROSE', price:120 },
+    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'DIAMUL', price:0   },
+    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'EMMWAT', price:450 },
+    { bg:'linear-gradient(160deg,#201e1a,#130f0a)', creator:'KGSYUS', price:0   },
+    { bg:'linear-gradient(160deg,#1a2020,#0f1414)', creator:'ANNSMI', price:180 },
+    { bg:'linear-gradient(160deg,#1e1e1e,#111)',    creator:'BIAROS', price:0   },
+    { bg:'linear-gradient(160deg,#282828,#141414)', creator:'CHROSE', price:100 },
+    { bg:'linear-gradient(160deg,#1c1c1c,#0f0f0f)', creator:'DIAMUL', price:0   },
+    { bg:'linear-gradient(160deg,#221e1e,#141010)', creator:'EMMWAT', price:220 },
   ];
   var _sfCurrentFilter  = 'videos';
   var _sfQueryOnOpen    = null;   // set by openSavedFromChat, consumed by showView('saved')
@@ -4098,6 +4123,7 @@
   var currentView = 'profile';
   var chatPreviousView = 'messages';
   var cloudPreviousView = 'chat';
+  var savedPreviousView = 'profile';
 
   var cloud = {
     lists: ['Free', 'PPV'],
@@ -6652,10 +6678,10 @@
 
     window.closeSavedPopup = _closeSaved;
 
-    /* X button in saved header — desktop: close popup, mobile: go back to profile */
+    /* X button in saved header — desktop: close popup, mobile: return to origin view */
     window.savedGoBack = function() {
       if (window.innerWidth >= 768) { _closeSaved(); }
-      else { window.showView('profile'); }
+      else { window.showView(savedPreviousView || 'profile'); }
     };
 
     /* Cloud button in saved header — desktop: close popup then open cloud; mobile: slide directly */
@@ -6664,15 +6690,14 @@
       window.showView('cloud');
     };
 
-    /* Folder button in chat header — open Saved Files pre-filtered to the contact */
+    /* Folder button in chat header — open Saved Files pre-filtered to the contact (by creator code) */
     window.openSavedFromChat = function(source) {
-      /* Always read from both headers — desk updates deskChatHeaderName,
-         openChat updates chatHeaderName. Take whichever is non-default.  */
-      var deskEl   = document.getElementById('deskChatHeaderName');
-      var mobileEl = document.getElementById('chatHeaderName');
+      /* Use the creator CODE so it matches savedItemsMeta entries */
+      var deskCode   = document.getElementById('deskChatHeaderCode');
+      var mobileCode = document.getElementById('chatHeaderCode');
       var raw = source === 'desk'
-        ? (deskEl   ? deskEl.textContent   : '')
-        : (mobileEl ? mobileEl.textContent : '');
+        ? (deskCode   ? deskCode.textContent   : '')
+        : (mobileCode ? mobileCode.textContent : '');
       raw = raw.trim();
       var query = raw;
 
