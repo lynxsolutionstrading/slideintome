@@ -4579,6 +4579,8 @@
   // ── Delete list — dropdown + confirmation ──────────────────────────
   var _ddListName = ''; // list name staged for deletion
 
+  var _ddOutsideClose = null; // reference for removal
+
   function _openListDropdown(name, btn) {
     _ddListName = name;
     var dd = document.getElementById('chipDropdown');
@@ -4587,12 +4589,28 @@
     dd.style.top  = (r.bottom + 5) + 'px';
     dd.style.left = Math.max(4, r.left - 40) + 'px';
     dd.style.display = 'block';
-    // Close when clicking anywhere else
+    // Remove any stale listener first
+    if (_ddOutsideClose) {
+      document.removeEventListener('pointerdown', _ddOutsideClose, true);
+      _ddOutsideClose = null;
+    }
+    // Close only when clicking OUTSIDE the dropdown
     setTimeout(function() {
-      document.addEventListener('pointerdown', _closeListDropdown, { once: true, capture: true });
+      _ddOutsideClose = function(e) {
+        var dd2 = document.getElementById('chipDropdown');
+        if (dd2 && dd2.contains(e.target)) return; // click inside — let it pass
+        document.removeEventListener('pointerdown', _ddOutsideClose, true);
+        _ddOutsideClose = null;
+        _closeListDropdown();
+      };
+      document.addEventListener('pointerdown', _ddOutsideClose, true);
     }, 0);
   }
   function _closeListDropdown() {
+    if (_ddOutsideClose) {
+      document.removeEventListener('pointerdown', _ddOutsideClose, true);
+      _ddOutsideClose = null;
+    }
     var dd = document.getElementById('chipDropdown');
     if (dd) dd.style.display = 'none';
   }
@@ -8886,8 +8904,8 @@
 </div>
 
 <!-- ── Chip Dropdown (delete list) ── -->
-<div id="chipDropdown" style="display:none;position:fixed;z-index:99999;background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:4px 0;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.55);">
-  <button onclick="_confirmDeleteList()" style="width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#e55;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;">
+<div id="chipDropdown" style="display:none;position:fixed;z-index:99999;background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:4px 0;min-width:148px;box-shadow:0 8px 24px rgba(0,0,0,0.55);">
+  <button onclick="_confirmDeleteList()" onmouseenter="this.style.background='rgba(200,50,50,0.10)'" onmouseleave="this.style.background='none'" style="width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#e55;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background 0.12s;border-radius:7px;">
     <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M5.5 6v4M8.5 6v4M3 3.5l.7 7.1a.5.5 0 00.5.4h5.6a.5.5 0 00.5-.4L11 3.5" stroke="#e55" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Liste löschen?
   </button>
