@@ -4131,8 +4131,8 @@
   }
 
   // ── Floating button active state helpers ──
-  function _deskBtnActive(btnEl)   { if (btnEl) { btnEl.style.borderColor = '#c0392b'; btnEl.style.color = '#fff'; btnEl.style.background = 'rgba(20,4,4,0.9)'; } }
-  function _deskBtnInactive(btnEl) { if (btnEl) { btnEl.style.borderColor = '#222';    btnEl.style.color = '#888'; btnEl.style.background = 'rgba(10,10,10,0.82)'; } }
+  function _deskBtnActive(btnEl)   { if (btnEl) { btnEl.style.borderWidth = '2px'; btnEl.style.borderColor = '#c0392b'; btnEl.style.color = '#fff'; btnEl.style.background = 'rgba(20,4,4,0.9)'; } }
+  function _deskBtnInactive(btnEl) { if (btnEl) { btnEl.style.borderWidth = '1px'; btnEl.style.borderColor = '#222';    btnEl.style.color = '#888'; btnEl.style.background = 'rgba(10,10,10,0.82)'; } }
 
   // ── Desktop Search panel ──
   function showDeskSearch() {
