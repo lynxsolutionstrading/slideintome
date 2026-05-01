@@ -2668,7 +2668,7 @@
 
       <!-- Footer action buttons -->
       <div style="padding:22px 16px 40px;display:flex;gap:12px;">
-        <button onclick="settingsGoBack()" style="flex:1;padding:14px 0;border:1.5px solid #c0392b;border-radius:12px;background:transparent;color:#c0392b;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.01em;transition:background 0.18s;" onmouseenter="this.style.background='rgba(192,57,43,0.1)'" onmouseleave="this.style.background='transparent'">Logout</button>
+        <button onclick="handleLogout()" style="flex:1;padding:14px 0;border:1.5px solid #c0392b;border-radius:12px;background:transparent;color:#c0392b;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.01em;transition:background 0.18s;" onmouseenter="this.style.background='rgba(192,57,43,0.1)'" onmouseleave="this.style.background='transparent'">Logout</button>
         <button style="flex:1;padding:14px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#8b1010,#c0392b);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.01em;transition:filter 0.18s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Deactivate Account</button>
       </div>
 
@@ -4940,6 +4940,40 @@
         /* login success toast removed */
       }, 500);
     }, 2000);
+  }
+
+  // ── Logout ──
+  function handleLogout() {
+    const overlay  = document.getElementById('fadeOverlay');
+    const loggedIn = document.getElementById('loggedInScreen');
+
+    // 1. Fade to black
+    overlay.style.transition = 'opacity 0.4s ease';
+    overlay.style.pointerEvents = 'all';
+    overlay.style.opacity = '1';
+
+    setTimeout(function() {
+      // 2. Hide logged-in screen
+      loggedIn.style.opacity = '0';
+      loggedIn.style.pointerEvents = 'none';
+
+      // 3. Reset login buttons so they're clickable again
+      var btns = [
+        document.getElementById('mobileTelegramBtn'),
+        document.getElementById('desktopTelegramBtn')
+      ];
+      btns.forEach(function(b) {
+        if (!b) return;
+        b.textContent = 'Login with Telegram';
+        b.disabled = false;
+      });
+
+      // 4. Fade overlay away — login screen is now revealed
+      setTimeout(function() {
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+      }, 80);
+    }, 420);
   }
 
   // ── Page layout toggle (mobile/desktop) ──
