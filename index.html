@@ -4957,7 +4957,7 @@
       loggedIn.style.opacity = '0';
       loggedIn.style.pointerEvents = 'none';
 
-      // 3. Reset login buttons so they're clickable again
+      // 3. Reset login buttons and keep age-gate ticked
       var btns = [
         document.getElementById('mobileTelegramBtn'),
         document.getElementById('desktopTelegramBtn')
@@ -4966,6 +4966,12 @@
         if (!b) return;
         b.textContent = 'Login with Telegram';
         b.disabled = false;
+        b.classList.remove('btn-age-locked'); // stay unlocked
+      });
+      // Keep both checkboxes ticked so user can log right back in
+      ['ageCheck', 'ageCheckDesktop'].forEach(function(id) {
+        var cb = document.getElementById(id);
+        if (cb) cb.checked = true;
       });
 
       // 4. Fade overlay away — login screen is now revealed
