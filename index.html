@@ -2411,8 +2411,8 @@
             <span style="color:#3d8f3d;font-weight:600;">+(amount)</span> adds balance<br>
             <span style="color:#8f3d3d;font-weight:600;">-(amount)</span> deducts balance<br><br>
             Notification function:<br>
-            <span style="color:#3d8f3d;font-weight:600;">+not(amount)</span> adds notifications<br>
-            <span style="color:#8f3d3d;font-weight:600;">-not(amount)</span> deducts notifications
+            <span style="color:#3d8f3d;font-weight:600;">+not20</span> adds notifications<br>
+            <span style="color:#8f3d3d;font-weight:600;">-not20</span> deducts notifications
           </div>
         </div>
       </div>
@@ -2462,7 +2462,7 @@
   <!-- ═══════════════════════════════════════
        CLOUD LIBRARY VIEW
   ═══════════════════════════════════════ -->
-  <div id="viewCloud" style="position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:6;background:#000;">
+  <div id="viewCloud" style="position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:6;background:#000;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.42,0,0.18,1.0);will-change:transform;">
 
     <!-- Header -->
     <div style="
@@ -2751,7 +2751,25 @@
     // Cloud overlays (z-index:6)
     if (name === 'cloud') {
       cloudPreviousView = currentView;
-      cloudView.style.display = 'flex';
+      if (window.innerWidth < 768) {
+        // Mobile: push slide — cloud slides in from right, current view exits left
+        var _cpvMap = {
+          profile:  document.getElementById('viewProfile'),
+          saved:    document.getElementById('viewSavedFiles'),
+          messages: document.getElementById('viewMessages'),
+          chat:     document.getElementById('viewChat')
+        };
+        var _cpvEl = _cpvMap[currentView];
+        cloudView.style.transition = 'none';
+        cloudView.style.transform  = 'translateX(100%)';
+        cloudView.style.display    = 'flex';
+        void cloudView.offsetWidth; // force reflow before animating
+        cloudView.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+        cloudView.style.transform  = 'translateX(0)';
+        if (_cpvEl) _cpvEl.style.transform = 'translateX(-100%)';
+      } else {
+        cloudView.style.display = 'flex';
+      }
       cloudOpen();
       return;
     }
@@ -4093,7 +4111,22 @@
   }
 
   function cloudGoBack() {
-    showView(cloudPreviousView);
+    // Mobile: push slide back — cloud exits right, previous view returns from left
+    var cloudV = document.getElementById('viewCloud');
+    var _cgbMap = {
+      profile:  document.getElementById('viewProfile'),
+      saved:    document.getElementById('viewSavedFiles'),
+      messages: document.getElementById('viewMessages'),
+      chat:     document.getElementById('viewChat')
+    };
+    var _prevEl = _cgbMap[cloudPreviousView];
+    cloudV.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+    cloudV.style.transform  = 'translateX(100%)';
+    if (_prevEl) _prevEl.style.transform = 'translateX(0)';
+    setTimeout(function() {
+      cloudV.style.display = 'none';
+      cloudV.style.transform = 'translateX(100%)'; // reset for next open
+    }, 420);
   }
 
   // ── Dropdown toggle ──
@@ -6625,9 +6658,9 @@
       else { window.showView('profile'); }
     };
 
-    /* Cloud button in saved header — close saved first, then open cloud */
+    /* Cloud button in saved header — desktop: close popup then open cloud; mobile: slide directly */
     window.savedOpenCloud = function() {
-      _closeSaved();
+      if (window.innerWidth >= 768) { _closeSaved(); }
       window.showView('cloud');
     };
 
