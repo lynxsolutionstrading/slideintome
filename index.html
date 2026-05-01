@@ -4855,6 +4855,7 @@
 
         // Init desktop CRM panels if on a wide screen
         initDesktopCRM();
+        _initChipBarScroll();
 
         /* login success toast removed */
       }, 500);
@@ -4876,6 +4877,52 @@
   }
   applyLayout();
   window.addEventListener('resize', applyLayout);
+
+  // ── Horizontal touch-scroll for chip bars ──────────────────────
+  // body has touch-action:none which blocks native horizontal pan on child
+  // elements in some browsers. We drive scrollLeft manually instead.
+  // Call once after login; safe to call multiple times (guarded by flag).
+  function _initChipBarScroll() {
+    ['mobileListsChips','mobileMsgsChips','deskListsChips','deskMidChips'].forEach(function(id) {
+      var wrap = document.getElementById(id);
+      if (!wrap || wrap._cbs) return; // already inited
+      wrap._cbs = true;
+
+      var startX = 0, startY = 0, startSL = 0, active = false, horiz = false;
+
+      wrap.addEventListener('touchstart', function(e) {
+        var sc = wrap.firstElementChild;
+        if (!sc) return;
+        startX  = e.touches[0].clientX;
+        startY  = e.touches[0].clientY;
+        startSL = sc.scrollLeft;
+        active  = true;
+        horiz   = false;
+      }, { passive: true });
+
+      wrap.addEventListener('touchmove', function(e) {
+        if (!active) return;
+        var sc = wrap.firstElementChild;
+        if (!sc) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!horiz) {
+          // Decide direction on first significant movement
+          if (Math.abs(dy) > Math.abs(dx) + 3) { active = false; return; }
+          if (Math.abs(dx) < 4) return; // not moved enough yet
+          horiz = true;
+        }
+        sc.scrollLeft = startSL - dx;
+        e.preventDefault(); // stop page scroll while chip bar is scrolling
+      }, { passive: false });
+
+      wrap.addEventListener('touchend',   function() { active = false; }, { passive: true });
+      wrap.addEventListener('touchcancel',function() { active = false; }, { passive: true });
+    });
+  }
+
+  // Init on DOM ready (desktop mouse wheel works without this; this is for touch)
+  document.addEventListener('DOMContentLoaded', _initChipBarScroll);
 
   // ── Portrait lock via Screen Orientation API (where supported) ──
   (function() {
