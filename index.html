@@ -4708,7 +4708,7 @@
       var panel = document.getElementById('notifPanel');
       if (!panel) return;
       var panelH  = panel.offsetHeight || window.innerHeight;
-      var threshold = panelH * 0.20; /* 20% drag → snap closed */
+      var threshold = panelH * 0.15; /* 15% drag → snap closed */
       if (-_nd.curDy >= threshold) {
         /* Snap closed — animate the rest of the way up */
         panel.style.transition = 'transform 0.28s cubic-bezier(0.42,0,0.18,1.0)';
