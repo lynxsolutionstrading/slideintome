@@ -2668,6 +2668,31 @@
 
   </div><!-- /viewSearch -->
 
+  <!-- ═══════════════════════════════════════
+       MY LISTS VIEW (mobile)
+  ═══════════════════════════════════════ -->
+  <div id="viewMyLists" style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.42,0,0.18,1.0);will-change:transform;z-index:7;background:#000;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 13px;background:#000;border-bottom:1px solid #141414;flex-shrink:0;">
+      <button onclick="listsGoBack()" style="width:32px;height:32px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="flex:1;position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="listsSearchInput" type="text" placeholder="Filter contacts..." autocomplete="off"
+          style="width:100%;box-sizing:border-box;background:#141414;border:1px solid #222;border-radius:10px;padding:9px 12px 9px 34px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;outline:none;"
+          oninput="handleListsSearch(this.value)">
+      </div>
+    </div>
+
+    <!-- Contact list -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      <div id="listsResults"></div>
+    </div>
+
+  </div><!-- /viewMyLists -->
+
   </div><!-- /viewContainer -->
 
   <!-- BOTTOM NAV -->
@@ -2692,7 +2717,7 @@
         <path d="M21 21l-4.35-4.35"/>
       </svg>
     </button>
-    <button id="nav-saved" onclick="showView('saved')" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
+    <button id="nav-saved" onclick="showView('lists')" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
       <svg id="nav-saved-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
         <line x1="3" y1="12" x2="21" y2="12"/>
@@ -2936,10 +2961,11 @@
     if (name === 'settings') settingsPreviousView = currentView;
     if (name === 'search')   searchPreviousView   = currentView;
     if (name === 'chat')     chatPreviousView     = currentView;
+    if (name === 'lists')    listsPreviousView    = currentView;
 
     // ── Direction from nav-bar spatial order ──
-    // settings(0) search(1) saved(2) messages(3) chat(3.5) profile(4)
-    var _vOrd = { settings: 0, search: 1, saved: 2, messages: 3, chat: 3.5, profile: 4 };
+    // settings(0) search(1) lists(2) messages(3) chat(3.5) profile(4)
+    var _vOrd = { settings: 0, search: 1, lists: 2, saved: 2, messages: 3, chat: 3.5, profile: 4 };
     var _fromIdx = _vOrd[currentView] !== undefined ? _vOrd[currentView] : 4;
     var _toIdx   = _vOrd[name]        !== undefined ? _vOrd[name]        : 4;
     var _goRight  = _toIdx < _fromIdx; // target is left-of-current → sweep right
@@ -2950,13 +2976,14 @@
     // ── Element map ──
     var _srch = document.getElementById('viewSearch');
     var _sett = document.getElementById('viewSettings');
+    var _lists = document.getElementById('viewMyLists');
     var _elMap = { profile: profile, messages: messages, chat: chat,
-                   saved: saved, search: _srch, settings: _sett };
+                   saved: saved, search: _srch, settings: _sett, lists: _lists };
     var _fromEl = _elMap[currentView] || null;
     var _toEl   = _elMap[name]        || null;
 
     // ── Ghost-slide prevention ──
-    [profile, messages, chat, saved, _srch, _sett].forEach(function(el) {
+    [profile, messages, chat, saved, _srch, _sett, _lists].forEach(function(el) {
       if (!el || el === _fromEl || el === _toEl) return;
       if ((el.style.transform || '').indexOf('-100%') !== -1) {
         el.style.transition = 'none';
@@ -2992,7 +3019,7 @@
     } else if (name === 'messages' || name === 'chat') {
       navChatIcon.style.opacity = '1';
     } else {
-      var _nid = { settings: 'nav-settings', search: 'nav-search', saved: 'nav-saved' }[name];
+      var _nid = { settings: 'nav-settings', search: 'nav-search', saved: 'nav-saved', lists: 'nav-saved' }[name];
       if (_nid) {
         var _nb = document.getElementById(_nid); var _ni = document.getElementById(_nid + '-icon');
         if (_nb) _nb.style.opacity = '1'; if (_ni) _ni.style.stroke = '#c0392b';
@@ -3005,6 +3032,11 @@
       if (_ms) _ms.value = '';
       filterContacts('');
       if (typeof window._contactsInit === 'function') window._contactsInit();
+    } else if (name === 'lists') {
+      var _lr = document.getElementById('listsResults');
+      var _li = document.getElementById('listsSearchInput');
+      if (_li) _li.value = '';
+      if (_lr) _renderMobileContactList(CONTACTS, _lr);
     } else if (name === 'saved') {
       var _pendingQ = _sfQueryOnOpen || '';
       _sfQueryOnOpen = null;
@@ -3614,8 +3646,38 @@
   }
 
   function settingsGoBack() { showView(settingsPreviousView || 'profile'); }
-
   function searchGoBack()   { showView(searchPreviousView   || 'profile'); }
+  function listsGoBack()    { showView(listsPreviousView    || 'profile'); }
+
+  function _renderMobileContactList(list, container) {
+    if (!list || !list.length) {
+      container.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;">No contacts found</div>';
+      return;
+    }
+    container.innerHTML = list.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      return '<div onclick="openChat(\'' + c.name.replace(/'/g,"\\'") + '\',\'' + c.code + '\')" '
+        + 'style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" '
+        + 'onmouseenter="this.style.background=\'#080808\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:14px;font-weight:600;color:#e8e8e8;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+          + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;margin-top:2px;letter-spacing:0.04em;">' + c.code + '</div>'
+        + '</div>'
+        + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        + '</div>';
+    }).join('');
+  }
+
+  function handleListsSearch(q) {
+    var res = document.getElementById('listsResults');
+    if (!res) return;
+    q = (q || '').trim().toLowerCase();
+    var list = q ? CONTACTS.filter(function(c) {
+      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
+    }) : CONTACTS;
+    _renderMobileContactList(list, res);
+  }
 
   // -- Open chat for a specific contact --
   function openChat(fullName, creatorCode) {
@@ -4131,7 +4193,7 @@
   }
 
   // ── Floating button active state helpers ──
-  function _deskBtnActive(btnEl)   { if (btnEl) { btnEl.style.borderWidth = '2px'; btnEl.style.borderColor = '#c0392b'; btnEl.style.color = '#fff'; btnEl.style.background = 'rgba(20,4,4,0.9)'; } }
+  function _deskBtnActive(btnEl)   { if (btnEl) { btnEl.style.borderWidth = '3px'; btnEl.style.borderColor = '#c0392b'; btnEl.style.color = '#fff'; btnEl.style.background = 'rgba(20,4,4,0.9)'; } }
   function _deskBtnInactive(btnEl) { if (btnEl) { btnEl.style.borderWidth = '1px'; btnEl.style.borderColor = '#222';    btnEl.style.color = '#888'; btnEl.style.background = 'rgba(10,10,10,0.82)'; } }
 
   // ── Desktop Search panel ──
@@ -4574,6 +4636,7 @@
   var savedPreviousView    = 'profile';
   var settingsPreviousView = 'profile';
   var searchPreviousView   = 'profile';
+  var listsPreviousView    = 'profile';
 
   var cloud = {
     lists: ['Free', 'PPV'],
