@@ -4373,9 +4373,13 @@
     ['mobileListsChips','mobileMsgsChips','deskListsChips','deskMidChips'].forEach(function(id) {
       var wrap = document.getElementById(id);
       if (!wrap) return;
+      // Save scroll position before innerHTML wipes it
+      var prevSL = wrap.firstElementChild ? wrap.firstElementChild.scrollLeft : 0;
       wrap.innerHTML = html;
-      // Attach pointer-capture drag to the scroll div (re-created by innerHTML)
-      _attachChipDrag(wrap.firstElementChild);
+      var sc = wrap.firstElementChild;
+      // Restore scroll position so the bar stays where the user left it
+      if (sc && prevSL) sc.scrollLeft = prevSL;
+      _attachChipDrag(sc);
     });
   }
 
