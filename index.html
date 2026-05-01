@@ -38,6 +38,8 @@
     #deskContactList,
     #deskChatScroll,
     #deskGridScroll,
+    #notifList,
+    #notifSettingsList,
     #viewCloud  > div[style*="overflow-y"],
     .grid-scroll,
     #purchaseAgreementModal [style*="overflow-y"] {
@@ -7605,7 +7607,7 @@
           </button>
         </div>
         <!-- Scrollable list -->
-        <div id="notifList" style="flex:1;overflow-y:auto;scrollbar-width:none;touch-action:pan-y;">
+        <div id="notifList" style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;touch-action:pan-y;">
           <!-- populated dynamically by _notifInfiniteInit() -->
         </div><!-- /scrollable list -->
       </div><!-- /page 1 -->
