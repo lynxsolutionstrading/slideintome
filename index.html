@@ -6731,8 +6731,8 @@
       '</div>';
     scroll.appendChild(recvDiv);
 
-    scroll.scrollTop = scroll.scrollHeight;
     input.value = '';
+    setTimeout(function() { scroll.scrollTop = scroll.scrollHeight; }, 0);
   }
 
   /* Wire Enter key + send buttons after DOM is ready */
