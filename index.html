@@ -1424,7 +1424,7 @@
         </div>
 
         <!-- ── Desktop Search Panel ── -->
-        <div id="deskSearchPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
+        <div id="deskSearchPanel" style="display:none;position:absolute;top:0;left:0;right:0;bottom:80px;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
           <div style="display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
             <div style="flex:1;position:relative;">
               <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -1445,7 +1445,7 @@
         </div>
 
         <!-- ── Desktop My Lists Panel ── -->
-        <div id="deskListsPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
+        <div id="deskListsPanel" style="display:none;position:absolute;top:0;left:0;right:0;bottom:80px;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
             <span style="font-size:14px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;letter-spacing:-0.01em;">My Lists</span>
             <button onclick="_closeDeskLists()" style="width:27px;height:27px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;">
@@ -4334,6 +4334,9 @@
   function showDeskSearch() {
     var p = document.getElementById('deskSearchPanel');
     if (!p) return;
+    // Toggle off if already open
+    if (p.style.display === 'flex') { _closeDeskSearch(); return; }
+    // Switch: close lists, open search
     _closeDeskLists();
     p.style.display = 'flex';
     var inp = document.getElementById('deskSearchInput');
@@ -4377,6 +4380,9 @@
   function showDeskLists() {
     var p = document.getElementById('deskListsPanel');
     if (!p) return;
+    // Toggle off if already open
+    if (p.style.display === 'flex') { _closeDeskLists(); return; }
+    // Switch: close search, open lists
     _closeDeskSearch();
     _renderDeskLists();
     p.style.display = 'flex';
