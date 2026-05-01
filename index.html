@@ -1423,7 +1423,7 @@
       </div><!-- /deskLeftContent -->
 
       <!-- Floating action buttons — desktop only, fixed to panel bottom -->
-      <div id="deskFloatBtns" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:5;pointer-events:none;white-space:nowrap;">
+      <div id="deskFloatBtns" style="position:absolute;bottom:20px;left:52px;display:flex;gap:10px;z-index:5;pointer-events:none;">
 
         <!-- Search -->
         <button onclick="void 0" style="pointer-events:all;width:130px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;background:rgba(10,10,10,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #222;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#888;letter-spacing:0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#fff';this.style.background='rgba(20,4,4,0.9)'" onmouseleave="this.style.borderColor='#222';this.style.color='#888';this.style.background='rgba(10,10,10,0.82)'">
@@ -3892,6 +3892,10 @@
       /* Content width: never narrower than CONTENT_MIN — below that bar overlaps from right */
       var content = document.getElementById('deskLeftContent');
       if (content) content.style.width = Math.max(CONTENT_MIN, clamped) + 'px';
+      /* Keep floating buttons centered — (panelWidth − btnWidth) / 2.
+         Negative values are fine: overflow:hidden clips both sides equally → still looks centred */
+      var _fb = document.getElementById('deskFloatBtns');
+      if (_fb) _fb.style.left = Math.round((clamped - 270) / 2) + 'px';
       return clamped;
     }
 
