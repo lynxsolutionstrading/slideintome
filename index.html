@@ -4592,11 +4592,36 @@
       }
     }
 
+    /* Stable fake timestamps keyed by pool index (minutes in the past) */
+    var _nMinsAgo = [5,18,42,90,150,240,360,480,720,1080,1440,2160,2880,4320,7200,10080];
+    function _nTimestamp(pi) {
+      var mins = _nMinsAgo[pi % _nMinsAgo.length];
+      var then = new Date(Date.now() - mins * 60000);
+      var ago;
+      if (mins < 60)        ago = 'vor ' + mins + ' Min.';
+      else if (mins < 1440) ago = 'vor ' + Math.round(mins/60) + ' Std.';
+      else                  { var d=Math.round(mins/1440); ago='vor '+d+(d===1?' Tag':' Tagen'); }
+      var dt = String(then.getDate()).padStart(2,'0')+'.'+String(then.getMonth()+1).padStart(2,'0')+'.'+then.getFullYear()
+             + ' · '+String(then.getHours()).padStart(2,'0')+':'+String(then.getMinutes()).padStart(2,'0');
+      return { ago:ago, dt:dt };
+    }
+
+    function _nTimeBlock(pi) {
+      var ts = _nTimestamp(pi);
+      return '<div style="flex-shrink:0;text-align:right;line-height:1.25;padding-left:4px;">'
+        + '<div style="font-size:9.5px;color:#505050;font-weight:600;white-space:nowrap;">'+ts.ago+'</div>'
+        + '<div style="font-size:8px;color:#343434;white-space:nowrap;margin-top:2px;letter-spacing:0.01em;">'+ts.dt+'</div>'
+        + '</div>';
+    }
+
     function _nRow(p, pi) {
       return '<div onclick="openNotifDetail('+pi+')" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">'
         + _nAvatar(p)
         + '<div style="flex:1;min-width:0;pointer-events:none;">'
-        + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:2px;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#fff;flex:1;min-width:0;">'+p.title+'</div>'
+        + _nTimeBlock(pi)
+        + '</div>'
         + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
         + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
         + '</div></div>';
@@ -4606,7 +4631,10 @@
       return '<div onclick="openNotifDetail('+pi+')" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;border-left:2px solid rgba(192,57,43,0.55);background:rgba(192,57,43,0.04);">'
         + _nAvatar(p)
         + '<div style="flex:1;min-width:0;pointer-events:none;">'
-        + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:2px;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#fff;flex:1;min-width:0;">'+p.title+'</div>'
+        + _nTimeBlock(pi)
+        + '</div>'
         + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
         + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
         + '</div></div>';
@@ -4682,7 +4710,7 @@
     };
 
     /* ── Notification detail popup ── */
-    var _nTimes  = ['vor 2 Min.','vor 8 Min.','vor 25 Min.','vor 1 Std.','vor 3 Std.','vor 6 Std.','vor 1 Tag','vor 2 Tagen'];
+    /* _nTimestamp() defined above — _nTimes kept for nothing, using _nTimestamp now */
     var _nExtras = {
       'user': 'Du kannst dich bedanken, indem du eine persönliche Nachricht sendest oder ebenfalls einen Tip schickst.',
       'post': 'Besuche dein Profil um die vollständigen Statistiken zu deinem Post einzusehen.',
@@ -4712,7 +4740,10 @@
       var sEl = document.getElementById('ndSub');   if (sEl) { sEl.textContent = p.sub; sEl.style.color = p.sc; }
       var bEl = document.getElementById('ndBody');  if (bEl) bEl.textContent = p.body;
       var eEl = document.getElementById('ndExtra'); if (eEl) eEl.textContent = _nExtras[p.t] || '';
-      var tEl = document.getElementById('ndTime');  if (tEl) tEl.textContent = _nTimes[pi % _nTimes.length];
+      var ts  = _nTimestamp(pi);
+      var tEl = document.getElementById('ndTime');
+      if (tEl) tEl.innerHTML = '<span style="font-weight:600;color:#444;">'+ts.ago+'</span>'
+        + '<span style="color:#2a2a2a;margin-left:8px;">'+ts.dt+'</span>';
       ov.style.display = 'flex';
       ov.style.opacity = '0';
       ov.style.transition = 'opacity 0.18s ease';
