@@ -40,6 +40,7 @@
     #deskGridScroll,
     #notifList,
     #notifSettingsList,
+    #settingsScroll,
     #viewCloud  > div[style*="overflow-y"],
     .grid-scroll,
     #purchaseAgreementModal [style*="overflow-y"] {
@@ -420,6 +421,7 @@
     /* ── Language selector ── */
     @media (min-width:768px) {
       #langSelector { display:flex !important; align-items:center; }
+      #deskSettingsBtn { display:flex !important; }
     }
     #langBtn:hover { border-color:#383838 !important; background:#1c1c1c !important; }
     #langBtn:active { transform:scale(0.97); }
@@ -1279,6 +1281,11 @@
 
     <!-- Right side: language selector + SlideKeys pill -->
     <div style="display:flex;align-items:center;gap:10px;">
+
+      <!-- Settings gear — hidden on mobile, shown on desktop via CSS -->
+      <button id="deskSettingsBtn" onclick="showView('settings')" style="display:none;width:36px;height:36px;border-radius:9px;background:#161616;border:1px solid #252525;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:border-color 0.15s,background 0.15s;" onmouseenter="this.style.background='#1e1e1e';this.style.borderColor='#c0392b'" onmouseleave="this.style.background='#161616';this.style.borderColor='#252525'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
 
       <!-- Language selector — hidden on mobile, shown on desktop via CSS -->
       <div id="langSelector" style="position:relative;display:none;">
@@ -2544,6 +2551,113 @@
     </div>
 
   </div><!-- /viewCloud -->
+
+  <!-- SETTINGS VIEW -->
+  <div id="viewSettings" style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.42,0,0.18,1.0);will-change:transform;z-index:5;background:#000;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 13px;background:#000;border-bottom:1px solid #141414;flex-shrink:0;">
+      <button onclick="settingsGoBack()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#1a0505;border:1.5px solid #5a1010;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.18s,border-color 0.18s;" onmouseenter="this.style.background='#2a0808';this.style.borderColor='#c0392b'" onmouseleave="this.style.background='#1a0505';this.style.borderColor='#5a1010'">
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="none"><path d="M16 6H2M2 6L7 1M2 6L7 11" stroke="#c0392b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.02em;">Settings</span>
+      <button onclick="showView('cloud')" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid #252525;border-radius:20px;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#666;transition:border-color 0.18s,color 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#ddd'" onmouseleave="this.style.borderColor='#252525';this.style.color='#666'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Cloud
+      </button>
+    </div>
+
+    <!-- Scrollable content -->
+    <div id="settingsScroll" style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+
+      <!-- ── ACTIVITIES ── -->
+      <div style="padding:16px 16px 7px;"><span style="font-size:10.5px;font-weight:600;color:#484848;text-transform:uppercase;letter-spacing:0.09em;">Activities</span></div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Your activities</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Platform notifications</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Blocked accounts</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div style="height:1px;background:#131313;margin:10px 16px 2px;"></div>
+
+      <!-- ── FINANCES ── -->
+      <div style="padding:14px 16px 7px;"><span style="font-size:10.5px;font-weight:600;color:#484848;text-transform:uppercase;letter-spacing:0.09em;">Finances</span></div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Deposits</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Withdrawals</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Purchases</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Sales</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Wallet</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div style="height:1px;background:#131313;margin:10px 16px 2px;"></div>
+
+      <!-- ── ANALYTICS ── -->
+      <div style="padding:14px 16px 7px;"><span style="font-size:10.5px;font-weight:600;color:#484848;text-transform:uppercase;letter-spacing:0.09em;">Analytics</span></div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Statistics</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <div style="height:1px;background:#131313;margin:10px 16px 2px;"></div>
+
+      <!-- ── YOUR ACCOUNT ── -->
+      <div style="padding:14px 16px 7px;"><span style="font-size:10.5px;font-weight:600;color:#484848;text-transform:uppercase;letter-spacing:0.09em;">Your account</span></div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Put a password on your account</span>
+        <div style="width:20px;height:20px;border-radius:50%;background:#0d2e0d;border:1.5px solid #1e5c1e;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Privacy</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid #0e0e0e;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#080808'" onmouseleave="this.style.background='transparent'">
+        <div style="width:34px;height:34px;border-radius:9px;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#d0d0d0;">Terms and Conditions</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- Footer action buttons -->
+      <div style="padding:22px 16px 40px;display:flex;gap:12px;">
+        <button onclick="settingsGoBack()" style="flex:1;padding:14px 0;border:1.5px solid #c0392b;border-radius:12px;background:transparent;color:#c0392b;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.01em;transition:background 0.18s;" onmouseenter="this.style.background='rgba(192,57,43,0.1)'" onmouseleave="this.style.background='transparent'">Logout</button>
+        <button style="flex:1;padding:14px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#8b1010,#c0392b);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.01em;transition:filter 0.18s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Deactivate Account</button>
+      </div>
+
+    </div><!-- /settingsScroll -->
+  </div><!-- /viewSettings -->
+
   </div><!-- /viewContainer -->
 
   <!-- BOTTOM NAV -->
@@ -2556,8 +2670,8 @@
     transition:transform 0.32s cubic-bezier(0.42,0,0.18,1.0),
                margin-bottom 0.32s cubic-bezier(0.42,0,0.18,1.0);
   ">
-    <button id="nav-settings" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
+    <button id="nav-settings" onclick="showView('settings')" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
+      <svg id="nav-settings-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
@@ -2800,9 +2914,67 @@
       return;
     }
 
+    // Settings view (z-index:5, slides in from right on mobile)
+    if (name === 'settings') {
+      settingsPreviousView = currentView;
+      if (window.innerWidth < 768) {
+        currentView = 'settings';
+        // Dim all nav items, highlight gear
+        navProfile.style.opacity       = '0.45';
+        avatarBorder.style.borderColor = '#333';
+        navChatIcon.style.opacity      = '0.45';
+        var _navS  = document.getElementById('nav-settings');
+        var _navSI = document.getElementById('nav-settings-icon');
+        if (_navS)  _navS.style.opacity = '1';
+        if (_navSI) _navSI.style.stroke = '#c0392b';
+        var _sv = document.getElementById('viewSettings');
+        if (_sv) {
+          _sv.style.transition = 'none';
+          _sv.style.transform  = 'translateX(100%)';
+          _sv.style.display    = 'flex';
+          void _sv.offsetWidth;
+          _sv.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+          _sv.style.transform  = 'translateX(0)';
+        }
+        // Exit current view to the left
+        var _sVMap = {
+          profile:  document.getElementById('viewProfile'),
+          saved:    document.getElementById('viewSavedFiles'),
+          messages: document.getElementById('viewMessages'),
+          chat:     document.getElementById('viewChat')
+        };
+        var _sFromEl = _sVMap[settingsPreviousView];
+        if (_sFromEl) _sFromEl.style.transform = 'translateX(-100%)';
+      }
+      return;
+    }
+
     // Hide cloud & wallet on any other navigation
     if (cloudView) cloudView.style.display = 'none';
     wallet.style.display = 'none';
+
+    // Slide settings view off-screen (mobile) when navigating away from it
+    if (currentView === 'settings' && window.innerWidth < 768) {
+      var _svHide = document.getElementById('viewSettings');
+      if (_svHide) {
+        _svHide.style.transition = 'none';
+        _svHide.style.transform  = 'translateX(100%)';
+        void _svHide.offsetWidth;
+        /* Keep display:flex — settings stays rendered off-screen like other views */
+      }
+      // Snap any view that was pushed to -100% (the previous view before settings) back to 100%
+      // so it doesn't ghost-animate through the screen when the target view sets it to 100%
+      var _snapT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      [profile, saved, messages, chat].forEach(function(el) {
+        if (el && el.style.transform.indexOf('-100%') !== -1) {
+          var _t = el.style.transition;
+          el.style.transition = 'none';
+          el.style.transform  = 'translateX(100%)';
+          void el.offsetWidth;
+          el.style.transition = _t || _snapT;
+        }
+      });
+    }
 
     // Already on this view — do nothing
     if (name === currentView) return;
@@ -2811,6 +2983,10 @@
     navProfile.style.opacity       = '0.45';
     avatarBorder.style.borderColor = '#333';
     navChatIcon.style.opacity      = '0.45';
+    var _navSReset = document.getElementById('nav-settings');
+    var _navSIReset = document.getElementById('nav-settings-icon');
+    if (_navSReset)  _navSReset.style.opacity = '0.45';
+    if (_navSIReset) _navSIReset.style.stroke  = '#fff';
 
     if (name === 'messages') {
       currentView = 'messages';
@@ -3501,6 +3677,37 @@
     showView('messages');
   }
 
+  function settingsGoBack() {
+    var _sv = document.getElementById('viewSettings');
+    var _prevEl = {
+      profile:  document.getElementById('viewProfile'),
+      saved:    document.getElementById('viewSavedFiles'),
+      messages: document.getElementById('viewMessages'),
+      chat:     document.getElementById('viewChat')
+    }[settingsPreviousView];
+    if (_sv) {
+      _sv.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      _sv.style.transform  = 'translateX(100%)';
+    }
+    if (_prevEl) _prevEl.style.transform = 'translateX(0)';
+    // Restore correct nav highlight for previous view
+    var navProfile   = document.getElementById('nav-profile');
+    var navChatIcon  = document.getElementById('nav-chat-icon');
+    var avatarBorder = navProfile ? navProfile.querySelector('div') : null;
+    var _navS  = document.getElementById('nav-settings');
+    var _navSI = document.getElementById('nav-settings-icon');
+    if (_navS)  _navS.style.opacity = '0.45';
+    if (_navSI) _navSI.style.stroke  = '#fff';
+    if (settingsPreviousView === 'profile') {
+      if (navProfile)   navProfile.style.opacity       = '1';
+      if (avatarBorder) avatarBorder.style.borderColor = '#c0392b';
+    } else if (settingsPreviousView === 'messages' || settingsPreviousView === 'chat') {
+      if (navChatIcon) navChatIcon.style.opacity = '1';
+    }
+    currentView = settingsPreviousView || 'profile';
+    /* Do NOT set display:none — keep settings as display:flex off-screen (like other main views) */
+  }
+
   // -- Open chat for a specific contact --
   function openChat(fullName, creatorCode) {
     _currentChatName = fullName || '';
@@ -4149,7 +4356,8 @@
   var currentView = 'profile';
   var chatPreviousView = 'messages';
   var cloudPreviousView = 'chat';
-  var savedPreviousView = 'profile';
+  var savedPreviousView    = 'profile';
+  var settingsPreviousView = 'profile';
 
   var cloud = {
     lists: ['Free', 'PPV'],
@@ -6630,6 +6838,14 @@
       if (bd)   bd.style.display = 'none';
     }
 
+    /* close settings popup (desktop) */
+    function _closeSettings() {
+      var s  = document.getElementById('viewSettings');
+      var bd = document.getElementById('settingsBackdrop');
+      if (s)  { s.style.display = 'none'; _clearPopupStyles(s); _deskUnfloatOverlay('viewSettings'); }
+      if (bd)   bd.style.display = 'none';
+    }
+
     /* ── showView patch ── */
     var _origSV = window.showView;
     if (typeof _origSV !== 'function') return;
@@ -6683,11 +6899,26 @@
         return;                                  /* skip origSV on desktop */
       }
 
+      if (desk && name === 'settings') {
+        _deskFloatOverlay('viewSettings');
+        var settV = document.getElementById('viewSettings');
+        if (settV) {
+          settV.style.display    = 'flex';
+          settV.style.transform  = 'none';    /* clear mobile transform */
+          settV.style.transition = '';
+          _popupStyles(settV, '420px', '80vh');
+        }
+        var stBd = document.getElementById('settingsBackdrop');
+        if (stBd) stBd.style.display = 'block';
+        return;                                  /* skip origSV on desktop */
+      }
+
       /* Any other view on desktop — close all popups first */
       if (desk) {
         _closePopup('viewWallet',    'walletBackdrop');
         _closePopup('viewCloud',     'cloudBackdrop');
         _closeSaved();
+        _closeSettings();
       }
 
       _origSV.apply(this, arguments);
@@ -6708,6 +6939,13 @@
     window.savedGoBack = function() {
       if (window.innerWidth >= 768) { _closeSaved(); }
       else { window.showView(savedPreviousView || 'profile'); }
+    };
+
+    /* Settings back — desktop: close popup, mobile: slide back */
+    var _origSGB = window.settingsGoBack;
+    window.settingsGoBack = function() {
+      if (window.innerWidth >= 768) { _closeSettings(); }
+      else if (_origSGB) _origSGB.apply(this, arguments);
     };
 
     /* Cloud button in saved header — desktop: close popup then open cloud; mobile: slide directly */
@@ -7369,6 +7607,9 @@
 
 <!-- Saved-files backdrop (desktop popup) -->
 <div id="savedBackdrop" onclick="closeSavedPopup()" style="display:none;position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"></div>
+
+<!-- Settings backdrop (desktop popup) -->
+<div id="settingsBackdrop" onclick="settingsGoBack()" style="display:none;position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"></div>
 
 <!-- ── Cloud: Inhalt senden — 3-section combined popup ── -->
 <div id="cloudSendPopup" style="display:none;position:fixed;inset:0;z-index:99996;font-family:'Inter',-apple-system,sans-serif;align-items:center;justify-content:center;">
