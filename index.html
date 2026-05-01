@@ -4505,12 +4505,20 @@
   }
   function _confirmCreateList() {
     var inp = document.getElementById('clCreateInput');
+    var err = document.getElementById('clCreateError');
     var name = inp ? inp.value.trim() : '';
     if (!name) return;
+    // Minimum 4 characters
+    if (name.length < 4) {
+      if (err) { err.textContent = 'Der Name muss mindestens 4 Buchstaben haben.'; err.style.display = 'block'; }
+      if (inp) inp.focus();
+      return;
+    }
+    // Duplicate check
     for (var i = 0; i < _contactLists.length; i++) {
       if (_contactLists[i].name.toLowerCase() === name.toLowerCase()) {
-        var err = document.getElementById('clCreateError');
-        if (err) err.style.display = 'block';
+        if (err) { err.textContent = 'Eine Liste mit diesem Namen existiert bereits.'; err.style.display = 'block'; }
+        if (inp) inp.focus();
         return;
       }
     }
@@ -8873,7 +8881,7 @@
       onblur="this.style.borderColor='#222'"
       oninput="document.getElementById('clCreateError').style.display='none'"
       onkeydown="if(event.key==='Enter')_confirmCreateList();if(event.key==='Escape')_hideCreateListModal()">
-    <div id="clCreateError" style="display:none;margin-top:6px;font-size:11px;color:#c0392b;font-weight:500;font-family:'Inter',sans-serif;">A list with this name already exists.</div>
+    <div id="clCreateError" style="display:none;margin-top:6px;font-size:11px;color:#c0392b;font-weight:500;font-family:'Inter',sans-serif;"></div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
       <button onclick="_hideCreateListModal()" style="padding:9px 16px;background:none;border:1px solid #222;border-radius:9px;color:#666;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:border-color 0.15s,color 0.15s;" onmouseenter="this.style.borderColor='#444';this.style.color='#aaa'" onmouseleave="this.style.borderColor='#222';this.style.color='#666'">Cancel</button>
       <button onclick="_confirmCreateList()" style="padding:9px 18px;background:linear-gradient(135deg,#8b1010,#c0392b);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:filter 0.15s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Create</button>
