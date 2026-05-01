@@ -979,7 +979,7 @@
 
       /* Notification panel scrollbars */
       #notifList::-webkit-scrollbar,
-      #notifSettingsList::-webkit-scrollbar { width: 3px; }
+      #notifSettingsList::-webkit-scrollbar { width: 0; display: none; }
       /* Drag handle hidden on desktop; on mobile the inline display:flex takes effect */
       #notifDragHandle { display: none !important; }
       #notifList::-webkit-scrollbar-track,
@@ -7514,7 +7514,7 @@
           </button>
         </div>
         <!-- Scrollable list -->
-        <div id="notifList" style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1c1c1c transparent;touch-action:pan-y;">
+        <div id="notifList" style="flex:1;overflow-y:auto;scrollbar-width:none;touch-action:pan-y;">
 
           <!-- User notification 1 -->
           <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
@@ -7593,6 +7593,60 @@
               <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
               <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">Wartungsarbeiten</div>
               <div style="font-size:10.5px;color:#525252;line-height:1.5;">Heute von 14.00 Uhr bis 16.00 Uhr ist die Webseite nicht erreichbar.</div>
+            </div>
+          </div>
+
+          <!-- User notification 3 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Hat deinen Post entsperrt und dir 120 SlideKeys gesendet.</div>
+            </div>
+          </div>
+
+          <!-- Post notification 3 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Post notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Dein Post erreicht neue Follower</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Dein neuester Post wurde bereits 50 mal angesehen. Weiter so!</div>
+            </div>
+          </div>
+
+          <!-- Payment notification 3 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#0a1f0a;border:1.5px solid #1a3d1a;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Payment notification</div>
+              <div style="font-size:11px;color:#27ae60;font-weight:600;margin-bottom:3px;">Tip erhalten</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Du hast 500 SlideKeys als Tip erhalten. Viel Spass damit!</div>
+            </div>
+          </div>
+
+          <!-- User notification 4 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&q=80" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #252525;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">User notification</div>
+              <div style="font-size:11px;color:#c0392b;font-weight:600;margin-bottom:3px;">Firstname lastname</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Folgt dir jetzt. Schau dir sein Profil an!</div>
+            </div>
+          </div>
+
+          <!-- Platform notification 3 -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">
+            <div style="width:46px;height:46px;border-radius:50%;background:#141414;border:1.5px solid #2e2e2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">Platform notification</div>
+              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:3px;">SlideInto.me Version 1.4</div>
+              <div style="font-size:10.5px;color:#525252;line-height:1.5;">Wir haben das App mit neuen Features aktualisiert. Viel Spass!</div>
             </div>
           </div>
 
