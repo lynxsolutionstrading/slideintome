@@ -2678,6 +2678,32 @@
     });
   }
 
+  // ── Grid swipe gesture (mobile) — swipe left = next tab, swipe right = prev tab ──
+  (function() {
+    var _gsx = 0, _gsy = 0, _gsOn = false;
+
+    document.addEventListener('touchstart', function(e) {
+      var g = document.getElementById('imageGrid');
+      var wrap = g ? g.parentNode : null;
+      if (!wrap || !wrap.contains(e.target)) { _gsOn = false; return; }
+      _gsx  = e.touches[0].clientX;
+      _gsy  = e.touches[0].clientY;
+      _gsOn = true;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      if (!_gsOn) return;
+      _gsOn = false;
+      var dx = e.changedTouches[0].clientX - _gsx;
+      var dy = e.changedTouches[0].clientY - _gsy;
+      // Require primarily-horizontal swipe of at least 40px
+      if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(dy)) return;
+      var idx = tabOrder.indexOf(currentTab) + (dx < 0 ? 1 : -1);
+      if (idx < 0 || idx >= tabOrder.length) return;
+      switchTab(tabOrder[idx]);
+    }, { passive: true });
+  })();
+
   // ── Reusable toast ──
   let _toastTimer = null;
   function showToast(title, sub) {
