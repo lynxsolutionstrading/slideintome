@@ -3,11 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="screen-orientation" content="portrait" />
   <title>SlideInto.me – Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     script, style { display: none !important; visibility: hidden !important; }
+
+    /* ── Portrait lock: on mobile, rotate content back when device is landscape ── */
+    @media (max-width: 767px) and (orientation: landscape) {
+      body {
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        overflow: hidden;
+        position: fixed;
+        top: 100%;
+        left: 0;
+      }
+    }
 
     html {
       height: 100%;
@@ -45,6 +60,14 @@
     .grid-scroll,
     #purchaseAgreementModal [style*="overflow-y"] {
       touch-action: pan-y;
+    }
+
+    /* Re-enable horizontal touch-scroll for contact-list chip bars */
+    #mobileListsChips > div,
+    #mobileMsgsChips > div,
+    #deskListsChips > div,
+    #deskMidChips > div {
+      touch-action: pan-x;
     }
 
     /* ════════════════════════════════
@@ -1457,6 +1480,8 @@
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
+          <!-- Lists chip bar -->
+          <div id="deskListsChips" style="flex-shrink:0;"></div>
           <div style="flex:1;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
             <div id="deskListsResults"><!-- populated by _renderDeskLists() --></div>
           </div>
@@ -1519,6 +1544,8 @@
         </div>
       </div>
 
+      <!-- Lists chip bar -->
+      <div id="deskMidChips" style="flex-shrink:0;"></div>
       <!-- Contact list (populated by JS) -->
       <div id="deskContactList" style="flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#1c1c1c transparent;"></div>
 
@@ -2266,6 +2293,8 @@
       </div>
     </div>
 
+    <!-- Lists chip bar -->
+    <div id="mobileMsgsChips" style="flex-shrink:0;"></div>
     <!-- Contact list (hidden while searching) — populated by _contactsInit() -->
     <div id="msgContactList" style="flex:1;overflow-y:auto;"></div>
   </div><!-- /viewMessages -->
@@ -2680,6 +2709,9 @@
       </div>
     </div>
 
+    <!-- Lists chip bar -->
+    <div id="mobileListsChips" style="flex-shrink:0;"></div>
+
     <!-- Contact list -->
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
       <div id="listsResults"></div>
@@ -3025,12 +3057,14 @@
       var _ms = document.getElementById('msgSearch');
       if (_ms) _ms.value = '';
       filterContacts('');
+      _renderAllChipBars();
       if (typeof window._contactsInit === 'function') window._contactsInit();
     } else if (name === 'lists') {
       var _lr = document.getElementById('listsResults');
       var _li = document.getElementById('listsSearchInput');
       if (_li) _li.value = '';
-      if (_lr) _renderMobileContactList(CONTACTS, _lr);
+      _renderAllChipBars();
+      if (_lr) _renderMobileListsContacts(_getFilteredContacts(), _lr);
     } else if (name === 'saved') {
       var _pendingQ = _sfQueryOnOpen || '';
       _sfQueryOnOpen = null;
@@ -3666,11 +3700,7 @@
   function handleListsSearch(q) {
     var res = document.getElementById('listsResults');
     if (!res) return;
-    q = (q || '').trim().toLowerCase();
-    var list = q ? CONTACTS.filter(function(c) {
-      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
-    }) : CONTACTS;
-    _renderMobileContactList(list, res);
+    _renderMobileListsContacts(_getFilteredContacts((q || '').trim()), res);
   }
 
   // -- Open chat for a specific contact --
@@ -4184,6 +4214,7 @@
     deskBuildGrid(_deskCurrentTab);
     _deskContactsInit();
     initDeskResize();   /* wire up the drag-resize handle */
+    _renderAllChipBars();
   }
 
   // ── Floating button active state helpers ──
@@ -4248,6 +4279,7 @@
     p.style.display = 'flex';
     var inp = document.getElementById('deskListsInput');
     if (inp) { inp.value = ''; setTimeout(function(){ inp.focus(); }, 80); }
+    _renderAllChipBars();
     _renderDeskLists();
     // Mark lists button active
     var _btns = document.querySelectorAll('#deskFloatBtns button');
@@ -4281,16 +4313,247 @@
   function _renderDeskLists() {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    _renderDeskContactList(CONTACTS, res);
+    _renderDeskContactList(_getFilteredContacts(), res);
   }
   function handleDeskListsFilter(q) {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    q = (q || '').trim().toLowerCase();
-    var list = q ? CONTACTS.filter(function(c) {
-      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
-    }) : CONTACTS;
-    _renderDeskContactList(list, res);
+    _renderDeskContactList(_getFilteredContacts((q || '').trim()), res);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  CONTACT LISTS — create lists, assign contacts, filter views
+  // ═══════════════════════════════════════════════════════════════
+
+  var _contactLists = [];    // [{name:'Favorites', members:['CODE1','CODE2',...]}]
+  var _cListActive  = 'all'; // 'all' or list name string
+
+  /* ── Build chip bar HTML ── */
+  function _buildChipBarHTML() {
+    var s = '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;background:#080808;border-bottom:1px solid #111;">';
+    // All chip
+    var allAct = (_cListActive === 'all');
+    s += '<button onclick="_selectListChip(\'all\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;transition:background 0.15s,color 0.15s;'
+      + (allAct ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
+      + '">All</button>';
+    // Per-list chips
+    _contactLists.forEach(function(lst) {
+      var act = (_cListActive === lst.name);
+      var esc = lst.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      s += '<button onclick="_selectListChip(\'' + esc + '\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
+        + (act ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
+        + '">' + _escHtml(lst.name) + '</button>';
+    });
+    // "+" create list button
+    s += '<button onclick="_showCreateListModal()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#141414;border:1px solid #222;color:#c0392b;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:\'Inter\',sans-serif;outline:none;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#222\'">+</button>';
+    s += '</div>';
+    return s;
+  }
+
+  /* ── Render chip bars in all 4 locations ── */
+  function _renderAllChipBars() {
+    var html = _buildChipBarHTML();
+    ['mobileListsChips','mobileMsgsChips','deskListsChips','deskMidChips'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
+  }
+
+  /* ── Select a chip ── */
+  function _selectListChip(name) {
+    _cListActive = name;
+    _renderAllChipBars();
+    _refreshContactListViews();
+  }
+
+  /* ── Filter contacts by active list + optional search query ── */
+  function _getFilteredContacts(searchQ) {
+    var q = (searchQ || '').trim().toLowerCase();
+    var list = CONTACTS;
+    if (_cListActive !== 'all') {
+      var lst = null;
+      for (var i = 0; i < _contactLists.length; i++) {
+        if (_contactLists[i].name === _cListActive) { lst = _contactLists[i]; break; }
+      }
+      var members = lst ? lst.members : [];
+      list = list.filter(function(c){ return members.indexOf(c.code) !== -1; });
+    }
+    if (q) {
+      list = list.filter(function(c){
+        return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    return list;
+  }
+
+  /* ── Refresh all 4 contact views after list chip change ── */
+  function _refreshContactListViews() {
+    var filtered = _getFilteredContacts();
+    // Mobile My Lists
+    var mlr = document.getElementById('listsResults');
+    if (mlr) _renderMobileListsContacts(filtered, mlr);
+    // Mobile Messages (only if not actively searching)
+    var msginp = document.getElementById('msgSearch');
+    if (!msginp || !msginp.value.trim()) {
+      var mcl = document.getElementById('msgContactList');
+      if (mcl) {
+        if (_cListActive === 'all') {
+          if (typeof window._contactsInit === 'function') window._contactsInit();
+        } else {
+          mcl.innerHTML = _filteredMsgContactsHTML(filtered);
+        }
+      }
+    }
+    // Desktop Lists panel
+    var dlr = document.getElementById('deskListsResults');
+    if (dlr) _renderDeskContactList(filtered, dlr);
+    // Desktop Mid (only if not actively searching)
+    var deskinp = document.getElementById('deskSearch');
+    if (!deskinp || !deskinp.value.trim()) {
+      var dmc = document.getElementById('deskContactList');
+      if (dmc) _renderDeskContactList(filtered, dmc);
+    }
+  }
+
+  /* ── Render contacts in Messages row style (for filtered list view) ── */
+  function _filteredMsgContactsHTML(list) {
+    if (!list.length) {
+      return '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;">No contacts in this list</div>';
+    }
+    var SVG_U = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#363636" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#363636" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    return list.map(function(c) {
+      var badge = c.unread ? '<div style="width:20px;height:20px;border-radius:50%;background:#c0392b;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#fff;margin-left:4px;">' + c.unread + '</div>' : '';
+      return '<div onclick="openChat(\'' + c.name.replace(/'/g,"\\'") + '\',\'' + c.code + '\')" '
+        + 'style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #0d0d0d;cursor:pointer;transition:background 0.15s;" '
+        + 'onmouseenter="this.style.background=\'#080808\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div style="width:50px;height:50px;border-radius:50%;background:#161616;border:1.5px solid #242424;flex-shrink:0;display:flex;align-items:center;justify-content:center;">' + SVG_U + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">'
+            + '<span style="font-size:14px;font-weight:600;color:#e8e8e8;letter-spacing:-0.01em;">' + _escHtml(c.name) + '</span>'
+            + '<span style="font-size:10px;color:#2e2e2e;font-weight:500;flex-shrink:0;margin-left:8px;">' + _escHtml(c.time) + '</span>'
+          + '</div>'
+          + '<div style="font-size:12px;color:#3a3a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">' + _escHtml(c.preview) + '</div>'
+        + '</div>'
+        + badge
+        + '</div>';
+    }).join('');
+  }
+
+  /* ── Render contacts in My Lists style (with assign-to-list button) ── */
+  function _renderMobileListsContacts(list, container) {
+    if (!list || !list.length) {
+      container.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;">No contacts found</div>';
+      return;
+    }
+    container.innerHTML = list.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      var esc = c.name.replace(/'/g,"\\'");
+      return '<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" onmouseenter="this.style.background=\'#080808\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div onclick="openChat(\'' + esc + '\',\'' + c.code + '\')" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;">'
+          + '<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+            + '<div style="font-size:14px;font-weight:600;color:#e8e8e8;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+            + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;margin-top:2px;letter-spacing:0.04em;">' + c.code + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<button onclick="_showAssignModal(\'' + c.code + '\',\'' + esc + '\')" '
+          + 'style="flex-shrink:0;width:30px;height:30px;border-radius:8px;background:#141414;border:1px solid #1e1e1e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s,border-color 0.15s;" '
+          + 'onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#1e1e1e\'">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'
+        + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  /* ── Create List Modal ── */
+  function _showCreateListModal() {
+    var modal = document.getElementById('clCreateModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    var inp = document.getElementById('clCreateInput');
+    var err = document.getElementById('clCreateError');
+    if (err) err.style.display = 'none';
+    if (inp) { inp.value = ''; setTimeout(function(){ inp.focus(); }, 60); }
+  }
+  function _hideCreateListModal() {
+    var modal = document.getElementById('clCreateModal');
+    if (modal) modal.style.display = 'none';
+  }
+  function _confirmCreateList() {
+    var inp = document.getElementById('clCreateInput');
+    var name = inp ? inp.value.trim() : '';
+    if (!name) return;
+    for (var i = 0; i < _contactLists.length; i++) {
+      if (_contactLists[i].name.toLowerCase() === name.toLowerCase()) {
+        var err = document.getElementById('clCreateError');
+        if (err) err.style.display = 'block';
+        return;
+      }
+    }
+    _contactLists.push({ name: name, members: [] });
+    _hideCreateListModal();
+    _renderAllChipBars();
+  }
+
+  /* ── Assign Contact to List Modal ── */
+  var _assignModalCode = '';
+  var _assignModalName = '';
+
+  function _showAssignModal(code, contactName) {
+    _assignModalCode = code;
+    _assignModalName = contactName;
+    _reRenderAssignModal();
+    var modal = document.getElementById('assignListModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    requestAnimationFrame(function(){
+      modal.style.opacity = '1';
+      var inner = document.getElementById('assignListInner');
+      if (inner) inner.style.transform = 'translateY(0)';
+    });
+  }
+  function _hideAssignModal() {
+    var modal = document.getElementById('assignListModal');
+    if (!modal) return;
+    modal.style.opacity = '0';
+    var inner = document.getElementById('assignListInner');
+    if (inner) inner.style.transform = 'translateY(40px)';
+    setTimeout(function(){ if (modal) modal.style.display = 'none'; }, 230);
+  }
+  function _reRenderAssignModal() {
+    var title = document.getElementById('assignListTitle');
+    if (title) title.textContent = 'Add “' + _assignModalName + '” to list';
+    var content = document.getElementById('assignListContent');
+    if (!content) return;
+    if (!_contactLists.length) {
+      content.innerHTML = '<div style="padding:24px 18px;text-align:center;color:#555;font-size:13px;font-family:\'Inter\',sans-serif;">No lists yet. Create one first.</div>';
+      return;
+    }
+    content.innerHTML = _contactLists.map(function(lst) {
+      var inList = lst.members.indexOf(_assignModalCode) !== -1;
+      var esc = lst.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<div onclick="_toggleListMember(\'' + esc + '\',\'' + _assignModalCode + '\')" '
+        + 'style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;cursor:pointer;border-bottom:1px solid #1a1a1a;transition:background 0.15s;" '
+        + 'onmouseenter="this.style.background=\'#0a0a0a\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<span style="font-size:14px;font-weight:500;color:#e0e0e0;font-family:\'Inter\',sans-serif;">' + _escHtml(lst.name) + '</span>'
+        + (inList
+          ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#c0392b"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          : '<div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;"></div>')
+        + '</div>';
+    }).join('');
+  }
+  function _toggleListMember(listName, code) {
+    var lst = null;
+    for (var i = 0; i < _contactLists.length; i++) {
+      if (_contactLists[i].name === listName) { lst = _contactLists[i]; break; }
+    }
+    if (!lst) return;
+    var idx = lst.members.indexOf(code);
+    if (idx === -1) lst.members.push(code);
+    else lst.members.splice(idx, 1);
+    _reRenderAssignModal();
+    // If we're viewing this list, refresh the contact views
+    if (_cListActive === listName) _refreshContactListViews();
   }
 
   // ── Mobile Search: filter through contacts ──
@@ -4604,6 +4867,21 @@
   }
   applyLayout();
   window.addEventListener('resize', applyLayout);
+
+  // ── Portrait lock via Screen Orientation API (where supported) ──
+  (function() {
+    function _lockPortrait() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('portrait').catch(function(){});
+        }
+      } catch(e) {}
+    }
+    // Try on load
+    _lockPortrait();
+    // Retry after user gesture (some browsers require it)
+    document.addEventListener('click', _lockPortrait, { once: true });
+  })();
 
   // ── Lock-shake overlay: clone each login logo, clip to lock area, animate it ──
   document.querySelectorAll('.logo-img').forEach(img => {
@@ -8476,6 +8754,40 @@
     <!-- Close button -->
     <div style="padding:0 20px 22px;">
       <button onclick="closeNotifDetail()" style="width:100%;padding:14px;background:#141414;border:1px solid #222;border-radius:13px;color:#666;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.01em;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#1c1c1c';this.style.color='#ccc'" onmouseleave="this.style.background='#141414';this.style.color='#666'">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create Contact List Modal ── -->
+<div id="clCreateModal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)_hideCreateListModal()">
+  <div style="background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:20px 20px 18px;width:280px;max-width:calc(100vw - 32px);">
+    <div style="font-size:15px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;margin-bottom:14px;letter-spacing:-0.01em;">New List</div>
+    <input id="clCreateInput" type="text" placeholder="List name…" maxlength="24" autocomplete="off"
+      style="width:100%;box-sizing:border-box;background:#0a0a0a;border:1.5px solid #222;border-radius:10px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color 0.18s;caret-color:#c0392b;"
+      onfocus="this.style.borderColor='#c0392b'"
+      onblur="this.style.borderColor='#222'"
+      oninput="document.getElementById('clCreateError').style.display='none'"
+      onkeydown="if(event.key==='Enter')_confirmCreateList();if(event.key==='Escape')_hideCreateListModal()">
+    <div id="clCreateError" style="display:none;margin-top:6px;font-size:11px;color:#c0392b;font-weight:500;font-family:'Inter',sans-serif;">A list with this name already exists.</div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button onclick="_hideCreateListModal()" style="padding:9px 16px;background:none;border:1px solid #222;border-radius:9px;color:#666;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:border-color 0.15s,color 0.15s;" onmouseenter="this.style.borderColor='#444';this.style.color='#aaa'" onmouseleave="this.style.borderColor='#222';this.style.color='#666'">Cancel</button>
+      <button onclick="_confirmCreateList()" style="padding:9px 18px;background:linear-gradient(135deg,#8b1010,#c0392b);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:filter 0.15s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Assign Contact to List Modal ── -->
+<div id="assignListModal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;opacity:0;transition:opacity 0.22s ease;" onclick="if(event.target===this)_hideAssignModal()">
+  <div id="assignListInner" style="background:#111;border-radius:18px 18px 0 0;width:100%;max-width:520px;padding-bottom:max(env(safe-area-inset-bottom),16px);transform:translateY(40px);transition:transform 0.25s cubic-bezier(0.42,0,0.18,1.0);border-top:1px solid #1e1e1e;">
+    <div style="padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a1a1a;">
+      <div id="assignListTitle" style="font-size:14px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;"></div>
+      <button onclick="_hideAssignModal()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#2a2a2a'" onmouseleave="this.style.background='#1a1a1a'">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#888" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="assignListContent" style="max-height:340px;overflow-y:auto;scrollbar-width:none;"></div>
+    <div style="padding:12px 18px;border-top:1px solid #1a1a1a;">
+      <button onclick="_hideAssignModal();setTimeout(_showCreateListModal,260)" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #252525;border-radius:10px;color:#c0392b;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background='#1a0505';this.style.borderColor='#c0392b'" onmouseleave="this.style.background='#1a1a1a';this.style.borderColor='#252525'">+ Create New List</button>
     </div>
   </div>
 </div>
