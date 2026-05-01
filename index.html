@@ -4035,48 +4035,90 @@
   }
 
   /* ── Render contact list ── */
+  /* ── Build one desktop contact row ── */
+  function _deskContactRow(c) {
+    var active = _deskActiveCode === c.code;
+    return '<div class="dcrm-contact' + (active ? ' dcrm-active' : '') + '"'
+      + ' data-code="' + c.code + '"'
+      + ' onclick="openDeskChat(\'' + c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\',\'' + c.code + '\')">'
+      + '<div style="width:44px;height:44px;min-width:44px;border-radius:50%;background:#141414;border:1.5px solid #222;display:flex;align-items:center;justify-content:center;">'
+        + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#363636" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#363636" stroke-width="1.5" stroke-linecap="round"/></svg>'
+      + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;">'
+          + '<span style="font-size:13px;font-weight:600;color:#d0d0d0;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:138px;">' + _escHtml(c.name) + '</span>'
+          + '<span style="font-size:10px;color:#262626;font-weight:500;flex-shrink:0;margin-left:6px;">' + _escHtml(c.time) + '</span>'
+        + '</div>'
+        + '<div style="font-size:11px;color:#2c2c2c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _escHtml(c.preview) + '</div>'
+      + '</div>'
+      + (c.unread ? '<div style="width:18px;height:18px;border-radius:50%;background:#c0392b;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:700;color:#fff;margin-left:4px;">' + c.unread + '</div>' : '')
+      + '</div>';
+  }
+
+  /* ── Render a fixed list (search results) — no pagination ── */
   function deskRenderContacts(list) {
     var container = document.getElementById('deskContactList');
     if (!container) return;
     if (!list || list.length === 0) {
-      container.innerHTML =
-        '<div style="padding:22px 14px;color:#2e2e2e;font-size:13px;text-align:center;line-height:1.6;">Keine Nutzer mit<br>diesem Namen gefunden!</div>';
+      container.innerHTML = '<div style="padding:22px 14px;color:#2e2e2e;font-size:13px;text-align:center;line-height:1.6;">Keine Nutzer mit<br>diesem Namen gefunden!</div>';
       return;
     }
-    container.innerHTML = list.map(function(c) {
-      var active = _deskActiveCode === c.code;
-      return (
-        '<div class="dcrm-contact' + (active ? ' dcrm-active' : '') + '"' +
-        ' data-code="' + c.code + '"' +
-        ' onclick="openDeskChat(\'' + c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\',\'' + c.code + '\')">' +
-          // Avatar circle
-          '<div style="width:44px;height:44px;min-width:44px;border-radius:50%;background:#141414;border:1.5px solid #222;display:flex;align-items:center;justify-content:center;">' +
-            '<svg width="19" height="19" viewBox="0 0 24 24" fill="none">' +
-              '<circle cx="12" cy="8" r="4" stroke="#363636" stroke-width="1.5"/>' +
-              '<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#363636" stroke-width="1.5" stroke-linecap="round"/>' +
-            '</svg>' +
-          '</div>' +
-          // Text
-          '<div style="flex:1;min-width:0;">' +
-            '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;">' +
-              '<span style="font-size:13px;font-weight:600;color:#d0d0d0;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:138px;">' + _escHtml(c.name) + '</span>' +
-              '<span style="font-size:10px;color:#262626;font-weight:500;flex-shrink:0;margin-left:6px;">' + _escHtml(c.time) + '</span>' +
-            '</div>' +
-            '<div style="font-size:11px;color:#2c2c2c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _escHtml(c.preview) + '</div>' +
-          '</div>' +
-          // Unread badge
-          (c.unread
-            ? '<div style="width:18px;height:18px;border-radius:50%;background:#c0392b;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:700;color:#fff;margin-left:4px;">' + c.unread + '</div>'
-            : '') +
-        '</div>'
-      );
-    }).join('');
+    container.innerHTML = list.map(_deskContactRow).join('');
+  }
+
+  /* ── Desktop contact list with infinite scroll ── */
+  var _dci = 0, _dcLoading = false, _dcBound = false;
+
+  function _deskContactsLoadMore(container, sentinel) {
+    if (_dci >= CONTACTS.length) { sentinel.style.display = 'none'; return; }
+    _dcLoading = true;
+    sentinel.innerHTML = '<div style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(192,57,43,0.2);border-top-color:#c0392b;animation:cspSpin 0.75s linear infinite;"></div>';
+    setTimeout(function() {
+      var end = Math.min(_dci + 20, CONTACTS.length);
+      var tmp = document.createElement('div');
+      tmp.innerHTML = '';
+      for (var i = _dci; i < end; i++) tmp.innerHTML += _deskContactRow(CONTACTS[i]);
+      _dci = end;
+      while (tmp.firstChild) container.insertBefore(tmp.firstChild, sentinel);
+      if (_dci >= CONTACTS.length) sentinel.style.display = 'none';
+      else sentinel.innerHTML = '';
+      _dcLoading = false;
+    }, 1500);
+  }
+
+  function _deskContactsInit() {
+    var container = document.getElementById('deskContactList');
+    if (!container) return;
+    _dci = 0; _dcLoading = false;
+    var html = '';
+    var end = Math.min(20, CONTACTS.length);
+    for (var i = 0; i < end; i++) html += _deskContactRow(CONTACTS[i]);
+    _dci = end;
+    container.innerHTML = html;
+    container.scrollTop = 0;
+
+    var sentinel = document.createElement('div');
+    sentinel.id = 'deskContactSentinel';
+    sentinel.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:14px;min-height:50px;';
+    container.appendChild(sentinel);
+
+    if (!_dcBound) {
+      _dcBound = true;
+      container.addEventListener('scroll', function() {
+        if (_dcLoading) return;
+        var s = document.getElementById('deskContactSentinel');
+        if (!s || s.style.display === 'none') return;
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 60) {
+          _deskContactsLoadMore(container, s);
+        }
+      }, { passive: true });
+    }
   }
 
   /* ── Live filter for desktop contacts ── */
   function deskFilterContacts(q) {
     q = (q || '').trim().toLowerCase();
-    if (!q) { deskRenderContacts(CONTACTS); return; }
+    if (!q) { _deskContactsInit(); return; }
     var matches = CONTACTS.filter(function(c) {
       return c.name.toLowerCase().indexOf(q) === 0 ||
              c.code.toLowerCase().indexOf(q) === 0;
@@ -4088,7 +4130,7 @@
   function initDesktopCRM() {
     if (window.innerWidth < 768) return;
     deskBuildGrid(_deskCurrentTab);
-    deskRenderContacts(CONTACTS);
+    _deskContactsInit();
     initDeskResize();   /* wire up the drag-resize handle */
   }
 
