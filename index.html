@@ -1085,7 +1085,7 @@
       <span class="field-label">Creator code</span>
       <input type="text" placeholder="(Optional)" autocomplete="off" spellcheck="false" />
     </div>
-    <button id="mobileTelegramBtn" class="btn-telegram btn-age-locked" onclick="handleLogin(this)">Login with Telegram</button>
+    <button id="mobileTelegramBtn" class="btn-telegram btn-age-locked" onclick="handleLogin(this)" onmouseenter="_tgHoverIn(this)" onmouseleave="_tgHoverOut(this)">Login with Telegram</button>
     <div class="age-gate">
       <label class="age-gate-label">
         <input type="checkbox" id="ageCheck" onchange="toggleAgeGate(this)" />
@@ -1166,7 +1166,7 @@
         <span class="field-label">Creator code</span>
         <input type="text" placeholder="(Optional)" autocomplete="off" spellcheck="false" />
       </div>
-      <button id="desktopTelegramBtn" class="btn-telegram btn-age-locked" onclick="handleLogin(this)">Login with Telegram</button>
+      <button id="desktopTelegramBtn" class="btn-telegram btn-age-locked" onclick="handleLogin(this)" onmouseenter="_tgHoverIn(this)" onmouseleave="_tgHoverOut(this)">Login with Telegram</button>
       <div class="age-gate">
         <label class="age-gate-label">
           <input type="checkbox" id="ageCheckDesktop" onchange="toggleAgeGate(this)" />
@@ -3989,6 +3989,18 @@
     });
   }
 
+  // ── Login button hover hint (age-locked state) ──
+  window._tgHoverIn = function(btn) {
+    if (btn.classList.contains('btn-age-locked')) {
+      btn.setAttribute('data-orig-text', btn.textContent);
+      btn.textContent = 'Tick the box before login';
+    }
+  };
+  window._tgHoverOut = function(btn) {
+    var orig = btn.getAttribute('data-orig-text');
+    if (orig) { btn.textContent = orig; btn.removeAttribute('data-orig-text'); }
+  };
+
   // ── Login / fade-in flow ──
   function handleLogin(btn) {
     // Block login if age-gate not confirmed
@@ -5109,6 +5121,7 @@
     var cost = _activeCall.totalCost;
     var secs = _activeCall.elapsed;
     _activeCall = null;
+    if (_callPopoutMonitor) { clearInterval(_callPopoutMonitor); _callPopoutMonitor = null; }
     var overlay = document.getElementById('activeCallPopup');
     if (overlay) { overlay.style.display = 'none'; overlay.style.cursor = 'grab'; }
     var dock = document.getElementById('callMiniDock');
@@ -5225,7 +5238,8 @@
   });
 
   /* ── Call popup: popout window ── */
-  var _callPopoutWin = null;
+  var _callPopoutWin     = null;
+  var _callPopoutMonitor = null;
 
   window.openCallPopout = function() {
     if (window.innerWidth < 768) return; /* desktop only */
@@ -5234,7 +5248,7 @@
     var timer = (document.getElementById('callTimer')      || {}).textContent || '00:00';
     var rate  = (document.getElementById('callRateLabel')  || {}).textContent || '';
     var cost  = (document.getElementById('callCostTotal')  || {}).textContent || '0 SK';
-    var pw = 280, ph = 360;
+    var pw = 280, ph = 400;
     var pl = Math.max(0, screen.width  - pw - 40);
     var pt = Math.max(0, screen.height - ph - 80);
     _callPopoutWin = window.open('', '_slideCallPopout',
@@ -5246,6 +5260,24 @@
     /* Hide main card while popout is open */
     var overlay = document.getElementById('activeCallPopup');
     if (overlay) overlay.style.display = 'none';
+    /* Monitor: if user closes the popout window → end call */
+    if (_callPopoutMonitor) clearInterval(_callPopoutMonitor);
+    _callPopoutMonitor = setInterval(function() {
+      if (_callPopoutWin && _callPopoutWin.closed) {
+        clearInterval(_callPopoutMonitor);
+        _callPopoutMonitor = null;
+        _callPopoutWin = null;
+        if (_activeCall) _endActiveCall();
+      }
+    }, 500);
+  };
+
+  /* Restore call card in main window (called from popout "pop-in" button) */
+  window._popInCall = function() {
+    if (_callPopoutMonitor) { clearInterval(_callPopoutMonitor); _callPopoutMonitor = null; }
+    _callPopoutWin = null;
+    var overlay = document.getElementById('activeCallPopup');
+    if (overlay && _activeCall) overlay.style.display = 'flex';
   };
 
   function _buildPopoutHTML(name, timer, rate, cost) {
@@ -5253,6 +5285,7 @@
        from accidentally treating them as end-tags while inside the <script> block.
        In JS string literals \/ === / so the written HTML is correct. */
     var phoneIcon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"><\/path><line x1="23" y1="1" x2="1" y2="23"><\/line><\/svg>';
+    var popInIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"><\/path><polyline points="10 17 15 12 10 7"><\/polyline><line x1="15" y1="12" x2="3" y2="12"><\/line><\/svg>';
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Call · ' + name + '<\/title>' +
       '<style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#0a0a0a;font-family:Inter,-apple-system,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:0;overflow:hidden;}' +
       '.av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#141414);border:2px solid #c0392b;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}' +
@@ -5261,7 +5294,9 @@
       '.dot{width:5px;height:5px;border-radius:50%;background:#27ae60;}' +
       '.ti{font-size:42px;font-weight:200;letter-spacing:.06em;font-variant-numeric:tabular-nums;margin-bottom:6px;}' +
       '.ra{font-size:11px;color:#484848;margin-bottom:12px;}' +
-      '.cs{font-size:12px;color:#aaa;font-weight:700;margin-bottom:22px;}' +
+      '.cs{font-size:12px;color:#aaa;font-weight:700;margin-bottom:20px;}' +
+      '.pb{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;background:#161616;border:1px solid #2a2a2a;color:#aaa;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.02em;margin-bottom:18px;transition:background .15s,color .15s;}' +
+      '.pb:hover{background:#222;color:#fff;}' +
       '.eb{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#8b0000,#c0392b);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(192,57,43,.5);}' +
       '.lb{font-size:10px;color:#484848;margin-top:7px;letter-spacing:.04em;}' +
       '<\/style><\/head><body>' +
@@ -5271,6 +5306,7 @@
       '<div class="ti" id="po_timer">' + timer + '<\/div>' +
       '<div class="ra" id="po_rate">' + rate + '<\/div>' +
       '<div class="cs" id="po_cost">' + cost + '<\/div>' +
+      '<button class="pb" onclick="if(window.opener&&window.opener._popInCall){window.opener._popInCall();}window.close();">' + popInIcon + 'Ins Hauptfenster<\/button>' +
       '<button class="eb" onclick="if(window.opener&&window.opener.endCall){window.opener.endCall();}window.close();">' + phoneIcon + '<\/button>' +
       '<div class="lb">Auflegen<\/div>' +
       '<\/body><\/html>';
