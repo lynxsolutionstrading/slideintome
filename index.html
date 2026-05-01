@@ -63,9 +63,13 @@
     }
 
     /* Re-enable horizontal touch-scroll for contact-list chip bars */
+    #mobileListsChips,
     #mobileListsChips > div,
+    #mobileMsgsChips,
     #mobileMsgsChips > div,
+    #deskListsChips,
     #deskListsChips > div,
+    #deskMidChips,
     #deskMidChips > div {
       touch-action: pan-x;
     }
@@ -4330,15 +4334,20 @@
 
   /* ── Build chip bar HTML ── */
   function _buildChipBarHTML() {
-    var s = '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;background:#080808;border-bottom:1px solid #111;touch-action:pan-x;">';
-    // "+" create list button — always first/leftmost
-    s += '<button onclick="_showCreateListModal()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#141414;border:1px solid #222;color:#c0392b;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:\'Inter\',sans-serif;outline:none;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#222\'">+</button>';
+    // Two-level pattern: outer = scroll viewport, inner = natural-width row
+    // This is the only layout that reliably triggers overflow-x on all browsers/mobile.
+    var s = '<div style="overflow-x:scroll;overflow-y:hidden;-webkit-overflow-scrolling:touch;'
+          + 'scrollbar-width:none;-ms-overflow-style:none;touch-action:pan-x;'
+          + 'background:#080808;border-bottom:1px solid #111;">';
+    s += '<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;white-space:nowrap;">';
+    // "+" create list button — always first/leftmost (always visible)
+    s += '<button onclick="_showCreateListModal()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#141414;border:1px solid #222;color:#c0392b;font-size:18px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:\'Inter\',sans-serif;outline:none;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#222\'">+</button>';
     // All chip
     var allAct = (_cListActive === 'all');
-    s += '<button onclick="_selectListChip(\'all\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;transition:background 0.15s,color 0.15s;'
+    s += '<button onclick="_selectListChip(\'all\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
       + (allAct ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
       + '">All</button>';
-    // Per-list chips (grow rightward as user creates more lists)
+    // Per-list chips — grow rightward, user scrolls to reach them
     _contactLists.forEach(function(lst) {
       var act = (_cListActive === lst.name);
       var esc = lst.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -4346,7 +4355,7 @@
         + (act ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
         + '">' + _escHtml(lst.name) + '</button>';
     });
-    s += '</div>';
+    s += '</div></div>';
     return s;
   }
 
