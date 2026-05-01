@@ -2758,6 +2758,9 @@
     if (cloudView) cloudView.style.display = 'none';
     wallet.style.display = 'none';
 
+    // Already on this view — do nothing
+    if (name === currentView) return;
+
     // Reset nav highlights — only icon gets dimmed, badge stays visible
     navProfile.style.opacity       = '0.45';
     avatarBorder.style.borderColor = '#333';
