@@ -1425,35 +1425,40 @@
 
         <!-- ── Desktop Search Panel ── -->
         <div id="deskSearchPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
-          <div style="display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;background:#000;">
             <div style="flex:1;position:relative;">
               <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input id="deskSearchInput" type="text" placeholder="Search creators..." autocomplete="off"
-                style="width:100%;box-sizing:border-box;background:#141414;border:1px solid #222;border-radius:9px;padding:8px 10px 8px 30px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;outline:none;"
+              <input id="deskSearchInput" type="text" placeholder="Search by Creator ID..." autocomplete="off"
+                style="width:100%;box-sizing:border-box;background:#111;border:1px solid #222;border-radius:9px;padding:8px 10px 8px 30px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;outline:none;caret-color:#c0392b;"
                 oninput="handleDeskSearch(this.value)">
             </div>
-            <button onclick="_closeDeskSearch()" style="width:27px;height:27px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+            <button onclick="_closeDeskSearch()" style="width:28px;height:28px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div style="flex:1;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
             <div id="deskSearchResults" style="padding:36px 14px;text-align:center;">
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <p style="color:#333;font-size:13px;margin-top:11px;font-family:'Inter',sans-serif;">Search for creators or content</p>
+              <p style="color:#333;font-size:13px;margin-top:11px;font-family:'Inter',sans-serif;">Enter a Creator ID to search</p>
             </div>
           </div>
         </div>
 
         <!-- ── Desktop My Lists Panel ── -->
         <div id="deskListsPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
-            <span style="font-size:14px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;letter-spacing:-0.01em;">My Lists</span>
-            <button onclick="_closeDeskLists()" style="width:27px;height:27px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;background:#000;">
+            <div style="flex:1;position:relative;">
+              <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input id="deskListsInput" type="text" placeholder="Filter contacts..." autocomplete="off"
+                style="width:100%;box-sizing:border-box;background:#111;border:1px solid #222;border-radius:9px;padding:8px 10px 8px 30px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;outline:none;caret-color:#c0392b;"
+                oninput="handleDeskListsFilter(this.value)">
+            </div>
+            <button onclick="_closeDeskLists()" style="width:28px;height:28px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div style="flex:1;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
-            <div id="deskListsGrid" style="padding:10px;"><!-- populated by _renderDeskLists() --></div>
+            <div id="deskListsResults"><!-- populated by _renderDeskLists() --></div>
           </div>
         </div>
 
@@ -2874,7 +2879,9 @@
     }
   });
 
-  // ── View navigation (swipe) ──
+  // ── View navigation ──
+  // Nav spatial order: settings(0) search(1) saved(2) messages(3) chat(3.5) profile(4)
+  // Direction: target left-of-current → sweep right (enter from left); target right → sweep left
   function showView(name) {
     const profile      = document.getElementById('viewProfile');
     const saved        = document.getElementById('viewSavedFiles');
@@ -2883,7 +2890,6 @@
     const chat         = document.getElementById('viewChat');
     const cloudView    = document.getElementById('viewCloud');
     const navProfile   = document.getElementById('nav-profile');
-    const navChat      = document.getElementById('nav-chat');
     const navChatIcon  = document.getElementById('nav-chat-icon');
     const avatarBorder = navProfile.querySelector('div');
 
@@ -2919,247 +2925,104 @@
       return;
     }
 
-    // Settings view (z-index:5, slides in from right on mobile)
-    if (name === 'settings') {
-      settingsPreviousView = currentView;
-      if (window.innerWidth < 768) {
-        currentView = 'settings';
-        // Dim all nav items, highlight gear
-        navProfile.style.opacity       = '0.45';
-        avatarBorder.style.borderColor = '#333';
-        navChatIcon.style.opacity      = '0.45';
-        var _navS  = document.getElementById('nav-settings');
-        var _navSI = document.getElementById('nav-settings-icon');
-        if (_navS)  _navS.style.opacity = '1';
-        if (_navSI) _navSI.style.stroke = '#c0392b';
-        var _sv = document.getElementById('viewSettings');
-        if (_sv) {
-          _sv.style.transition = 'none';
-          _sv.style.transform  = 'translateX(100%)';
-          _sv.style.display    = 'flex';
-          void _sv.offsetWidth;
-          _sv.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-          _sv.style.transform  = 'translateX(0)';
-        }
-        // Exit current view to the left
-        var _sVMap = {
-          profile:  document.getElementById('viewProfile'),
-          saved:    document.getElementById('viewSavedFiles'),
-          messages: document.getElementById('viewMessages'),
-          chat:     document.getElementById('viewChat')
-        };
-        var _sFromEl = _sVMap[settingsPreviousView];
-        if (_sFromEl) _sFromEl.style.transform = 'translateX(-100%)';
-      }
-      return;
-    }
-
-    // Search view (slides in from right on mobile)
-    if (name === 'search') {
-      searchPreviousView = currentView;
-      currentView = 'search';
-      // Dim all nav items
-      navProfile.style.opacity       = '0.45';
-      avatarBorder.style.borderColor = '#333';
-      navChatIcon.style.opacity      = '0.45';
-      var _navSRst = document.getElementById('nav-settings');
-      var _navSIRst = document.getElementById('nav-settings-icon');
-      if (_navSRst)  _navSRst.style.opacity  = '0.45';
-      if (_navSIRst) _navSIRst.style.stroke   = '#fff';
-      var _navSvdRst = document.getElementById('nav-saved');
-      if (_navSvdRst) _navSvdRst.style.opacity = '0.45';
-      // Highlight search
-      var _navSrc = document.getElementById('nav-search');
-      var _navSrcI = document.getElementById('nav-search-icon');
-      if (_navSrc)  _navSrc.style.opacity  = '1';
-      if (_navSrcI) _navSrcI.style.stroke  = '#c0392b';
-      // Slide viewSearch in from right, slide current view out left
-      var _srchV = document.getElementById('viewSearch');
-      if (_srchV) {
-        _srchV.style.transition = 'none';
-        _srchV.style.transform  = 'translateX(100%)';
-        _srchV.style.display    = 'flex';
-        void _srchV.offsetWidth;
-        _srchV.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-        _srchV.style.transform  = 'translateX(0)';
-      }
-      var _srchFromEl = { profile: profile, saved: saved, messages: messages, chat: chat }[searchPreviousView];
-      if (_srchFromEl) _srchFromEl.style.transform = 'translateX(-100%)';
-      return;
-    }
-
-    // Hide cloud & wallet on any other navigation
+    // ── Hide overlays for all main view transitions ──
     if (cloudView) cloudView.style.display = 'none';
     wallet.style.display = 'none';
 
-    // Slide settings view off-screen (mobile) when navigating away from it
-    if (currentView === 'settings' && window.innerWidth < 768) {
-      var _svHide = document.getElementById('viewSettings');
-      if (_svHide) {
-        _svHide.style.transition = 'none';
-        _svHide.style.transform  = 'translateX(100%)';
-        void _svHide.offsetWidth;
-        /* Keep display:flex — settings stays rendered off-screen like other views */
-      }
-      // Snap any view that was pushed to -100% (the previous view before settings) back to 100%
-      // so it doesn't ghost-animate through the screen when the target view sets it to 100%
-      var _snapT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      [profile, saved, messages, chat].forEach(function(el) {
-        if (el && el.style.transform.indexOf('-100%') !== -1) {
-          var _t = el.style.transition;
-          el.style.transition = 'none';
-          el.style.transform  = 'translateX(100%)';
-          void el.offsetWidth;
-          el.style.transition = _t || _snapT;
-        }
-      });
-    }
-
-    // Slide search view off-screen (mobile) when navigating away from it
-    if (currentView === 'search' && window.innerWidth < 768) {
-      var _srchHide = document.getElementById('viewSearch');
-      if (_srchHide) {
-        _srchHide.style.transition = 'none';
-        _srchHide.style.transform  = 'translateX(100%)';
-        void _srchHide.offsetWidth;
-      }
-      var _snapT2 = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      [profile, saved, messages, chat].forEach(function(el) {
-        if (el && el.style.transform.indexOf('-100%') !== -1) {
-          var _t2 = el.style.transition;
-          el.style.transition = 'none';
-          el.style.transform  = 'translateX(100%)';
-          void el.offsetWidth;
-          el.style.transition = _t2 || _snapT2;
-        }
-      });
-    }
-
-    // Already on this view — do nothing
     if (name === currentView) return;
 
-    // Reset nav highlights — only icon gets dimmed, badge stays visible
-    navProfile.style.opacity       = '0.45';
-    avatarBorder.style.borderColor = '#333';
-    navChatIcon.style.opacity      = '0.45';
-    var _navSReset = document.getElementById('nav-settings');
-    var _navSIReset = document.getElementById('nav-settings-icon');
-    if (_navSReset)  _navSReset.style.opacity = '0.45';
-    if (_navSIReset) _navSIReset.style.stroke  = '#fff';
-    var _navSrcReset = document.getElementById('nav-search');
-    var _navSrcIReset = document.getElementById('nav-search-icon');
-    if (_navSrcReset)  _navSrcReset.style.opacity = '0.45';
-    if (_navSrcIReset) _navSrcIReset.style.stroke  = '#fff';
-    var _navSvdReset = document.getElementById('nav-saved');
-    var _navSvdIReset = document.getElementById('nav-saved-icon');
-    if (_navSvdReset)  _navSvdReset.style.opacity = '0.45';
-    if (_navSvdIReset) _navSvdIReset.style.stroke  = '#fff';
+    // ── Capture previous views ──
+    if (name === 'saved')    savedPreviousView    = currentView;
+    if (name === 'settings') settingsPreviousView = currentView;
+    if (name === 'search')   searchPreviousView   = currentView;
+    if (name === 'chat')     chatPreviousView     = currentView;
 
-    if (name === 'messages') {
-      currentView = 'messages';
-      // Reset search state every time we enter messages view
-      var _ms = document.getElementById('msgSearch');
-      if (_ms) _ms.value = '';
-      filterContacts('');
-      // (Re-)populate the contact list with infinite-scroll
-      if (typeof window._contactsInit === 'function') window._contactsInit();
-      // Snap messages to left edge instantly (no transition) so it slides in from the LEFT
-      var msgTrans = messages.style.transition;
-      messages.style.transition = 'none';
-      messages.style.transform  = 'translateX(-100%)';
-      void messages.offsetWidth; // force reflow
-      messages.style.transition = msgTrans;
-      // Profile exits RIGHT (it's spatially to the right of messages)
-      profile.style.transform   = 'translateX(100%)';
-      saved.style.transform     = 'translateX(100%)';
-      chat.style.transform      = 'translateX(100%)';
-      messages.style.transform  = 'translateX(0)';
-      navChatIcon.style.opacity = '1';
-    } else if (name === 'chat') {
-      chatPreviousView = currentView;
-      currentView = 'chat';
-      if (chatPreviousView === 'messages') {
-        // Messages exits left as chat slides in from right
-        messages.style.transform = 'translateX(-100%)';
-      } else if (chatPreviousView === 'saved') {
-        // Reverse push: saved exits right as chat comes back from left
-        saved.style.transform = 'translateX(100%)';
-      }
-      chat.style.transform      = 'translateX(0)';
-      navChatIcon.style.opacity = '1';
-    } else if (name === 'saved') {
-      savedPreviousView = currentView;
-      currentView = 'saved';
-      var _navSvdBtn = document.getElementById('nav-saved');
-      var _navSvdBtnI = document.getElementById('nav-saved-icon');
-      if (_navSvdBtn)  _navSvdBtn.style.opacity = '1';
-      if (_navSvdBtnI) _navSvdBtnI.style.stroke  = '#c0392b';
-      var _sSlideT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      var _sfromEl = { profile: profile, chat: chat, messages: messages }[savedPreviousView] || profile;
-      // Snap every background view (not the one we're leaving) to off-screen-right,
-      // without animation, so they don't ghost-slide through the visible area.
-      [profile, messages, chat].forEach(function(el) {
-        if (el === _sfromEl) return;
-        var _t = el.style.transition;
+    // ── Direction from nav-bar spatial order ──
+    // settings(0) search(1) saved(2) messages(3) chat(3.5) profile(4)
+    var _vOrd = { settings: 0, search: 1, saved: 2, messages: 3, chat: 3.5, profile: 4 };
+    var _fromIdx = _vOrd[currentView] !== undefined ? _vOrd[currentView] : 4;
+    var _toIdx   = _vOrd[name]        !== undefined ? _vOrd[name]        : 4;
+    var _goRight  = _toIdx < _fromIdx; // target is left-of-current → sweep right
+    var _enterFrom = _goRight ? 'translateX(-100%)' : 'translateX(100%)';
+    var _exitTo    = _goRight ? 'translateX(100%)'  : 'translateX(-100%)';
+    var _slideT    = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+
+    // ── Element map ──
+    var _srch = document.getElementById('viewSearch');
+    var _sett = document.getElementById('viewSettings');
+    var _elMap = { profile: profile, messages: messages, chat: chat,
+                   saved: saved, search: _srch, settings: _sett };
+    var _fromEl = _elMap[currentView] || null;
+    var _toEl   = _elMap[name]        || null;
+
+    // ── Ghost-slide prevention ──
+    [profile, messages, chat, saved, _srch, _sett].forEach(function(el) {
+      if (!el || el === _fromEl || el === _toEl) return;
+      if ((el.style.transform || '').indexOf('-100%') !== -1) {
         el.style.transition = 'none';
         el.style.transform  = 'translateX(100%)';
         void el.offsetWidth;
-        el.style.transition = _t || _sSlideT;
-      });
-      _sfromEl.style.transform = 'translateX(-100%)'; // current view exits left
-      saved.style.transform    = 'translateX(0)';     // saved enters from right
-      // Consume pending query (set by openSavedFromChat), or reset to empty
+      }
+    });
+
+    // ── Animate ──
+    if (_toEl) {
+      _toEl.style.transition = 'none';
+      _toEl.style.transform  = _enterFrom;
+      _toEl.style.display    = 'flex';
+      void _toEl.offsetWidth;
+      _toEl.style.transition = _slideT;
+      _toEl.style.transform  = 'translateX(0)';
+    }
+    if (_fromEl) {
+      _fromEl.style.transition = _slideT;
+      _fromEl.style.transform  = _exitTo;
+    }
+
+    // ── Nav highlights ──
+    navProfile.style.opacity       = '0.45';
+    avatarBorder.style.borderColor = '#333';
+    navChatIcon.style.opacity      = '0.45';
+    ['nav-settings','nav-search','nav-saved'].forEach(function(id) {
+      var _b = document.getElementById(id); var _i = document.getElementById(id + '-icon');
+      if (_b) _b.style.opacity = '0.45'; if (_i) _i.style.stroke = '#fff';
+    });
+    if (name === 'profile') {
+      navProfile.style.opacity = '1'; avatarBorder.style.borderColor = '#c0392b';
+    } else if (name === 'messages' || name === 'chat') {
+      navChatIcon.style.opacity = '1';
+    } else {
+      var _nid = { settings: 'nav-settings', search: 'nav-search', saved: 'nav-saved' }[name];
+      if (_nid) {
+        var _nb = document.getElementById(_nid); var _ni = document.getElementById(_nid + '-icon');
+        if (_nb) _nb.style.opacity = '1'; if (_ni) _ni.style.stroke = '#c0392b';
+      }
+    }
+
+    // ── Per-view setup ──
+    if (name === 'messages') {
+      var _ms = document.getElementById('msgSearch');
+      if (_ms) _ms.value = '';
+      filterContacts('');
+      if (typeof window._contactsInit === 'function') window._contactsInit();
+    } else if (name === 'saved') {
       var _pendingQ = _sfQueryOnOpen || '';
       _sfQueryOnOpen = null;
       var _scs = document.getElementById('sfCreatorSearch');
       if (_scs) _scs.value = _pendingQ;
       _sfCurrentFilter = 'videos';
       ['sf-filter-videos','sf-filter-images','sf-filter-audio'].forEach(function(fid) {
-        var fb = document.getElementById(fid);
-        if (!fb) return;
+        var fb = document.getElementById(fid); if (!fb) return;
         var active = fid === 'sf-filter-videos';
         fb.style.background = active ? '#c0392b' : 'transparent';
         fb.style.color      = active ? '#fff' : '#666';
         fb.style.fontWeight = active ? '600' : '500';
       });
-      // Single render — use combined list (dynamic + static), respecting type filter
       _sfCurrentFilter = 'videos';
       sfFilterCreator(_pendingQ || '');
-    } else {
-      // profile (default)
-      var prevView = currentView;
-      currentView = 'profile';
-      // Snap any views parked off-screen-left (-100%) to off-screen-right without animation
-      // to prevent ghost slides across the visible area when returning to profile
-      var _pSlideT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      [saved, messages, chat].forEach(function(el) {
-        if (el.style.transform.indexOf('-100%') !== -1) {
-          var _pt = el.style.transition;
-          el.style.transition = 'none';
-          el.style.transform  = 'translateX(100%)';
-          void el.offsetWidth;
-          el.style.transition = _pt || _pSlideT;
-        }
-      });
-      saved.style.transform          = 'translateX(100%)';
-      chat.style.transform           = 'translateX(100%)';
-      profile.style.transform        = 'translateX(0)';
-      navProfile.style.opacity       = '1';
-      avatarBorder.style.borderColor = '#c0392b';
-      if (prevView === 'messages') {
-        // Messages exits left (mirror of how it entered)
-        messages.style.transform = 'translateX(-100%)';
-      } else if (prevView === 'chat') {
-        // Messages is parked off-left from when we entered chat — snap it to the right
-        var _mt = messages.style.transition;
-        messages.style.transition = 'none';
-        messages.style.transform  = 'translateX(100%)';
-        void messages.offsetWidth;
-        messages.style.transition = _mt || _pSlideT;
-      } else {
-        messages.style.transform = 'translateX(100%)';
-      }
     }
+
+    currentView = name;
   }
 
   // ── Close wallet ──
@@ -3750,72 +3613,9 @@
     showView('messages');
   }
 
-  function settingsGoBack() {
-    var _sv = document.getElementById('viewSettings');
-    var _prevEl = {
-      profile:  document.getElementById('viewProfile'),
-      saved:    document.getElementById('viewSavedFiles'),
-      messages: document.getElementById('viewMessages'),
-      chat:     document.getElementById('viewChat')
-    }[settingsPreviousView];
-    if (_sv) {
-      _sv.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      _sv.style.transform  = 'translateX(100%)';
-    }
-    if (_prevEl) _prevEl.style.transform = 'translateX(0)';
-    // Restore correct nav highlight for previous view
-    var navProfile   = document.getElementById('nav-profile');
-    var navChatIcon  = document.getElementById('nav-chat-icon');
-    var avatarBorder = navProfile ? navProfile.querySelector('div') : null;
-    var _navS  = document.getElementById('nav-settings');
-    var _navSI = document.getElementById('nav-settings-icon');
-    if (_navS)  _navS.style.opacity = '0.45';
-    if (_navSI) _navSI.style.stroke  = '#fff';
-    if (settingsPreviousView === 'profile') {
-      if (navProfile)   navProfile.style.opacity       = '1';
-      if (avatarBorder) avatarBorder.style.borderColor = '#c0392b';
-    } else if (settingsPreviousView === 'messages' || settingsPreviousView === 'chat') {
-      if (navChatIcon) navChatIcon.style.opacity = '1';
-    }
-    currentView = settingsPreviousView || 'profile';
-    /* Do NOT set display:none — keep settings as display:flex off-screen (like other main views) */
-  }
+  function settingsGoBack() { showView(settingsPreviousView || 'profile'); }
 
-  function searchGoBack() {
-    var _srchV = document.getElementById('viewSearch');
-    var _prevEl = {
-      profile:  document.getElementById('viewProfile'),
-      saved:    document.getElementById('viewSavedFiles'),
-      messages: document.getElementById('viewMessages'),
-      chat:     document.getElementById('viewChat')
-    }[searchPreviousView];
-    if (_srchV) {
-      _srchV.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
-      _srchV.style.transform  = 'translateX(100%)';
-    }
-    if (_prevEl) _prevEl.style.transform = 'translateX(0)';
-    // Dim search icon
-    var _navSrc  = document.getElementById('nav-search');
-    var _navSrcI = document.getElementById('nav-search-icon');
-    if (_navSrc)  _navSrc.style.opacity  = '0.45';
-    if (_navSrcI) _navSrcI.style.stroke  = '#fff';
-    // Restore nav for previous view
-    var _navPro  = document.getElementById('nav-profile');
-    var _navCI   = document.getElementById('nav-chat-icon');
-    var _avBrd   = _navPro ? _navPro.querySelector('div') : null;
-    if (searchPreviousView === 'profile') {
-      if (_navPro)  _navPro.style.opacity        = '1';
-      if (_avBrd)   _avBrd.style.borderColor     = '#c0392b';
-    } else if (searchPreviousView === 'messages' || searchPreviousView === 'chat') {
-      if (_navCI)   _navCI.style.opacity          = '1';
-    } else if (searchPreviousView === 'saved') {
-      var _navSvd = document.getElementById('nav-saved');
-      var _navSvdI = document.getElementById('nav-saved-icon');
-      if (_navSvd)  _navSvd.style.opacity  = '1';
-      if (_navSvdI) _navSvdI.style.stroke  = '#c0392b';
-    }
-    currentView = searchPreviousView || 'profile';
-  }
+  function searchGoBack()   { showView(searchPreviousView   || 'profile'); }
 
   // -- Open chat for a specific contact --
   function openChat(fullName, creatorCode) {
@@ -4330,23 +4130,30 @@
     initDeskResize();   /* wire up the drag-resize handle */
   }
 
+  // ── Floating button active state helpers ──
+  function _deskBtnActive(btnEl)   { if (btnEl) { btnEl.style.borderColor = '#c0392b'; btnEl.style.color = '#fff'; btnEl.style.background = 'rgba(20,4,4,0.9)'; } }
+  function _deskBtnInactive(btnEl) { if (btnEl) { btnEl.style.borderColor = '#222';    btnEl.style.color = '#888'; btnEl.style.background = 'rgba(10,10,10,0.82)'; } }
+
   // ── Desktop Search panel ──
   function showDeskSearch() {
     var p = document.getElementById('deskSearchPanel');
     if (!p) return;
-    // Toggle off if already open
     if (p.style.display === 'flex') { _closeDeskSearch(); return; }
-    // Switch: close lists, open search
     _closeDeskLists();
     p.style.display = 'flex';
     var inp = document.getElementById('deskSearchInput');
     if (inp) { inp.value = ''; setTimeout(function() { inp.focus(); }, 80); }
     var res = document.getElementById('deskSearchResults');
-    if (res) res.innerHTML = '<div style="padding:36px 14px;text-align:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p style="color:#333;font-size:13px;margin-top:11px;font-family:\'Inter\',sans-serif;">Search for creators or content</p></div>';
+    if (res) res.innerHTML = '<div style="padding:36px 14px;text-align:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p style="color:#333;font-size:13px;margin-top:11px;font-family:\'Inter\',sans-serif;">Enter a Creator ID to search</p></div>';
+    // Mark search button active
+    var _btns = document.querySelectorAll('#deskFloatBtns button');
+    _deskBtnActive(_btns[0]); _deskBtnInactive(_btns[1]);
   }
   function _closeDeskSearch() {
     var p = document.getElementById('deskSearchPanel');
     if (p) p.style.display = 'none';
+    var _btns = document.querySelectorAll('#deskFloatBtns button');
+    _deskBtnInactive(_btns[0]);
   }
   function handleDeskSearch(q) {
     var res = document.getElementById('deskSearchResults');
@@ -4380,45 +4187,54 @@
   function showDeskLists() {
     var p = document.getElementById('deskListsPanel');
     if (!p) return;
-    // Toggle off if already open
     if (p.style.display === 'flex') { _closeDeskLists(); return; }
-    // Switch: close search, open lists
     _closeDeskSearch();
-    _renderDeskLists();
     p.style.display = 'flex';
+    var inp = document.getElementById('deskListsInput');
+    if (inp) { inp.value = ''; setTimeout(function(){ inp.focus(); }, 80); }
+    _renderDeskLists();
+    // Mark lists button active
+    var _btns = document.querySelectorAll('#deskFloatBtns button');
+    _deskBtnInactive(_btns[0]); _deskBtnActive(_btns[1]);
   }
   function _closeDeskLists() {
     var p = document.getElementById('deskListsPanel');
     if (p) p.style.display = 'none';
+    var _btns = document.querySelectorAll('#deskFloatBtns button');
+    _deskBtnInactive(_btns[1]);
   }
-  function _renderDeskLists() {
-    var grid = document.getElementById('deskListsGrid');
-    if (!grid) return;
-    var dynItems = (_savedDynamicItems || []).map(function(it) {
-      return { dataUrl: it.dataUrl, creator: it.creator, price: 0, bg: '#111' };
-    });
-    var staticItems = savedItemsMeta.map(function(it) {
-      return { dataUrl: null, creator: it.creator, price: it.price, bg: it.bg };
-    });
-    var all = dynItems.concat(staticItems);
-    if (!all.length) {
-      grid.innerHTML = '<div style="padding:40px 14px;text-align:center;color:#3a3a3a;font-size:13px;font-family:\'Inter\',sans-serif;">Your saved items will appear here</div>';
+  function _renderDeskContactList(list, container) {
+    if (!list || !list.length) {
+      container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;">No contacts found</div>';
       return;
     }
-    grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2px;">'
-      + all.map(function(it) {
-        var inner = it.dataUrl
-          ? '<img src="' + it.dataUrl + '" style="width:100%;height:100%;object-fit:cover;">'
-          : '';
-        var badge = it.price > 0
-          ? '<div style="position:absolute;top:5px;right:5px;background:rgba(192,57,43,0.9);border-radius:5px;padding:2px 5px;font-size:9px;font-weight:700;color:#fff;font-family:\'Inter\',sans-serif;">' + it.price + ' C</div>'
-          : '';
-        return '<div style="aspect-ratio:3/4;background:' + it.bg + ';position:relative;overflow:hidden;">'
-          + inner + badge
-          + '<div style="position:absolute;bottom:5px;left:6px;font-size:9px;color:#666;font-family:\'Inter\',sans-serif;">' + it.creator + '</div>'
-          + '</div>';
-      }).join('')
-      + '</div>';
+    container.innerHTML = list.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      return '<div onclick="openDeskChat(\'' + c.name.replace(/'/g,"\\'") + '\',\'' + c.code + '\')" '
+        + 'style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" '
+        + 'onmouseenter="this.style.background=\'#0a0a0a\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:13px;font-weight:600;color:#e0e0e0;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+          + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;letter-spacing:0.04em;">' + c.code + '</div>'
+        + '</div>'
+        + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        + '</div>';
+    }).join('');
+  }
+  function _renderDeskLists() {
+    var res = document.getElementById('deskListsResults');
+    if (!res) return;
+    _renderDeskContactList(CONTACTS, res);
+  }
+  function handleDeskListsFilter(q) {
+    var res = document.getElementById('deskListsResults');
+    if (!res) return;
+    q = (q || '').trim().toLowerCase();
+    var list = q ? CONTACTS.filter(function(c) {
+      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
+    }) : CONTACTS;
+    _renderDeskContactList(list, res);
   }
 
   // ── Mobile Search: filter through contacts ──
