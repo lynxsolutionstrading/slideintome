@@ -4968,10 +4968,13 @@
         b.disabled = false;
         b.classList.remove('btn-age-locked'); // stay unlocked
       });
-      // Keep both checkboxes ticked so user can log right back in
+      // Untick checkboxes and re-lock buttons
       ['ageCheck', 'ageCheckDesktop'].forEach(function(id) {
         var cb = document.getElementById(id);
-        if (cb) cb.checked = true;
+        if (cb) cb.checked = false;
+      });
+      btns.forEach(function(b) {
+        if (b) b.classList.add('btn-age-locked');
       });
 
       // 4. Fade overlay away — login screen is now revealed
