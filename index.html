@@ -6862,6 +6862,7 @@
 
       if (desk && name === 'cloud') {
         _closeSaved();                            /* close saved if open */
+        _closeSettings();                         /* close settings if open */
         _deskFloatOverlay('viewCloud');
         _origSV.apply(this, arguments);          /* sets display:flex */
         var c = document.getElementById('viewCloud');
