@@ -1415,10 +1415,49 @@
         <button id="dtab-tiktok"    class="desk-tab-btn"        onclick="deskSwitchTab('tiktok')">TikTok</button>
       </div>
 
-      <!-- IMAGE GRID (scrollable) — identical to mobile -->
-      <div id="deskGridScroll" class="grid-scroll" style="flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;background:#000;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;position:relative;">
-        <div id="deskImageGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.2s ease;"></div>
-      </div>
+      <!-- GRID WRAPPER — relative container so overlay panels anchor to this area -->
+      <div id="deskGridWrapper" style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- IMAGE GRID (scrollable) — identical to mobile -->
+        <div id="deskGridScroll" class="grid-scroll" style="flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;background:#000;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;position:relative;">
+          <div id="deskImageGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.2s ease;"></div>
+        </div>
+
+        <!-- ── Desktop Search Panel ── -->
+        <div id="deskSearchPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
+            <div style="flex:1;position:relative;">
+              <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input id="deskSearchInput" type="text" placeholder="Search creators..." autocomplete="off"
+                style="width:100%;box-sizing:border-box;background:#141414;border:1px solid #222;border-radius:9px;padding:8px 10px 8px 30px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;outline:none;"
+                oninput="handleDeskSearch(this.value)">
+            </div>
+            <button onclick="_closeDeskSearch()" style="width:27px;height:27px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+            <div id="deskSearchResults" style="padding:36px 14px;text-align:center;">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <p style="color:#333;font-size:13px;margin-top:11px;font-family:'Inter',sans-serif;">Search for creators or content</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Desktop My Lists Panel ── -->
+        <div id="deskListsPanel" style="display:none;position:absolute;inset:0;background:#000;z-index:20;flex-direction:column;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px 10px;border-bottom:1px solid #141414;flex-shrink:0;">
+            <span style="font-size:14px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;letter-spacing:-0.01em;">My Lists</span>
+            <button onclick="_closeDeskLists()" style="width:27px;height:27px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+            <div id="deskListsGrid" style="padding:10px;"><!-- populated by _renderDeskLists() --></div>
+          </div>
+        </div>
+
+      </div><!-- /deskGridWrapper -->
 
       </div><!-- /deskLeftContent -->
 
@@ -1426,13 +1465,13 @@
       <div id="deskFloatBtns" style="position:absolute;bottom:20px;left:52px;display:flex;gap:10px;z-index:5;pointer-events:none;transition:opacity 0.18s ease;">
 
         <!-- Search -->
-        <button onclick="void 0" style="pointer-events:all;width:130px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;background:rgba(10,10,10,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #222;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#888;letter-spacing:0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#fff';this.style.background='rgba(20,4,4,0.9)'" onmouseleave="this.style.borderColor='#222';this.style.color='#888';this.style.background='rgba(10,10,10,0.82)'">
+        <button onclick="showDeskSearch()" style="pointer-events:all;width:130px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;background:rgba(10,10,10,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #222;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#888;letter-spacing:0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#fff';this.style.background='rgba(20,4,4,0.9)'" onmouseleave="this.style.borderColor='#222';this.style.color='#888';this.style.background='rgba(10,10,10,0.82)'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           Search
         </button>
 
         <!-- My Lists -->
-        <button onclick="void 0" style="pointer-events:all;width:130px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;background:rgba(10,10,10,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #222;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#888;letter-spacing:0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#fff';this.style.background='rgba(20,4,4,0.9)'" onmouseleave="this.style.borderColor='#222';this.style.color='#888';this.style.background='rgba(10,10,10,0.82)'">
+        <button onclick="showDeskLists()" style="pointer-events:all;width:130px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;background:rgba(10,10,10,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #222;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#888;letter-spacing:0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#fff';this.style.background='rgba(20,4,4,0.9)'" onmouseleave="this.style.borderColor='#222';this.style.color='#888';this.style.background='rgba(10,10,10,0.82)'">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           My Lists
         </button>
@@ -2596,6 +2635,34 @@
     </div><!-- /settingsScroll -->
   </div><!-- /viewSettings -->
 
+  <!-- ═══════════════════════════════════════
+       SEARCH VIEW
+  ═══════════════════════════════════════ -->
+  <div id="viewSearch" style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.42,0,0.18,1.0);will-change:transform;z-index:7;background:#000;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 13px;background:#000;border-bottom:1px solid #141414;flex-shrink:0;">
+      <button onclick="searchGoBack()" style="width:32px;height:32px;border-radius:50%;background:#181818;border:1px solid #252525;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="flex:1;position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="searchInput" type="text" placeholder="Search creators..." autocomplete="off"
+          style="width:100%;box-sizing:border-box;background:#141414;border:1px solid #222;border-radius:10px;padding:9px 12px 9px 34px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;outline:none;"
+          oninput="handleSearch(this.value)">
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      <div id="searchResults" style="padding:48px 20px;text-align:center;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#252525" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <p style="color:#3a3a3a;font-size:14px;margin-top:14px;font-family:'Inter',sans-serif;line-height:1.5;">Search for creators or content</p>
+      </div>
+    </div>
+
+  </div><!-- /viewSearch -->
+
   </div><!-- /viewContainer -->
 
   <!-- BOTTOM NAV -->
@@ -2614,14 +2681,14 @@
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </button>
-    <button id="nav-search" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
+    <button id="nav-search" onclick="showView('search')" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
+      <svg id="nav-search-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
         <circle cx="11" cy="11" r="8"/>
         <path d="M21 21l-4.35-4.35"/>
       </svg>
     </button>
-    <button id="nav-saved" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
+    <button id="nav-saved" onclick="showView('saved')" style="background:none;border:none;cursor:pointer;padding:5px;opacity:0.45;">
+      <svg id="nav-saved-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
         <line x1="3" y1="12" x2="21" y2="12"/>
         <line x1="3" y1="18" x2="21" y2="18"/>
@@ -2887,6 +2954,40 @@
       return;
     }
 
+    // Search view (slides in from right on mobile)
+    if (name === 'search') {
+      searchPreviousView = currentView;
+      currentView = 'search';
+      // Dim all nav items
+      navProfile.style.opacity       = '0.45';
+      avatarBorder.style.borderColor = '#333';
+      navChatIcon.style.opacity      = '0.45';
+      var _navSRst = document.getElementById('nav-settings');
+      var _navSIRst = document.getElementById('nav-settings-icon');
+      if (_navSRst)  _navSRst.style.opacity  = '0.45';
+      if (_navSIRst) _navSIRst.style.stroke   = '#fff';
+      var _navSvdRst = document.getElementById('nav-saved');
+      if (_navSvdRst) _navSvdRst.style.opacity = '0.45';
+      // Highlight search
+      var _navSrc = document.getElementById('nav-search');
+      var _navSrcI = document.getElementById('nav-search-icon');
+      if (_navSrc)  _navSrc.style.opacity  = '1';
+      if (_navSrcI) _navSrcI.style.stroke  = '#c0392b';
+      // Slide viewSearch in from right, slide current view out left
+      var _srchV = document.getElementById('viewSearch');
+      if (_srchV) {
+        _srchV.style.transition = 'none';
+        _srchV.style.transform  = 'translateX(100%)';
+        _srchV.style.display    = 'flex';
+        void _srchV.offsetWidth;
+        _srchV.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+        _srchV.style.transform  = 'translateX(0)';
+      }
+      var _srchFromEl = { profile: profile, saved: saved, messages: messages, chat: chat }[searchPreviousView];
+      if (_srchFromEl) _srchFromEl.style.transform = 'translateX(-100%)';
+      return;
+    }
+
     // Hide cloud & wallet on any other navigation
     if (cloudView) cloudView.style.display = 'none';
     wallet.style.display = 'none';
@@ -2914,6 +3015,26 @@
       });
     }
 
+    // Slide search view off-screen (mobile) when navigating away from it
+    if (currentView === 'search' && window.innerWidth < 768) {
+      var _srchHide = document.getElementById('viewSearch');
+      if (_srchHide) {
+        _srchHide.style.transition = 'none';
+        _srchHide.style.transform  = 'translateX(100%)';
+        void _srchHide.offsetWidth;
+      }
+      var _snapT2 = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      [profile, saved, messages, chat].forEach(function(el) {
+        if (el && el.style.transform.indexOf('-100%') !== -1) {
+          var _t2 = el.style.transition;
+          el.style.transition = 'none';
+          el.style.transform  = 'translateX(100%)';
+          void el.offsetWidth;
+          el.style.transition = _t2 || _snapT2;
+        }
+      });
+    }
+
     // Already on this view — do nothing
     if (name === currentView) return;
 
@@ -2925,6 +3046,14 @@
     var _navSIReset = document.getElementById('nav-settings-icon');
     if (_navSReset)  _navSReset.style.opacity = '0.45';
     if (_navSIReset) _navSIReset.style.stroke  = '#fff';
+    var _navSrcReset = document.getElementById('nav-search');
+    var _navSrcIReset = document.getElementById('nav-search-icon');
+    if (_navSrcReset)  _navSrcReset.style.opacity = '0.45';
+    if (_navSrcIReset) _navSrcIReset.style.stroke  = '#fff';
+    var _navSvdReset = document.getElementById('nav-saved');
+    var _navSvdIReset = document.getElementById('nav-saved-icon');
+    if (_navSvdReset)  _navSvdReset.style.opacity = '0.45';
+    if (_navSvdIReset) _navSvdIReset.style.stroke  = '#fff';
 
     if (name === 'messages') {
       currentView = 'messages';
@@ -2961,6 +3090,10 @@
     } else if (name === 'saved') {
       savedPreviousView = currentView;
       currentView = 'saved';
+      var _navSvdBtn = document.getElementById('nav-saved');
+      var _navSvdBtnI = document.getElementById('nav-saved-icon');
+      if (_navSvdBtn)  _navSvdBtn.style.opacity = '1';
+      if (_navSvdBtnI) _navSvdBtnI.style.stroke  = '#c0392b';
       var _sSlideT = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
       var _sfromEl = { profile: profile, chat: chat, messages: messages }[savedPreviousView] || profile;
       // Snap every background view (not the one we're leaving) to off-screen-right,
@@ -3648,6 +3781,42 @@
     /* Do NOT set display:none — keep settings as display:flex off-screen (like other main views) */
   }
 
+  function searchGoBack() {
+    var _srchV = document.getElementById('viewSearch');
+    var _prevEl = {
+      profile:  document.getElementById('viewProfile'),
+      saved:    document.getElementById('viewSavedFiles'),
+      messages: document.getElementById('viewMessages'),
+      chat:     document.getElementById('viewChat')
+    }[searchPreviousView];
+    if (_srchV) {
+      _srchV.style.transition = 'transform 0.38s cubic-bezier(0.42,0,0.18,1.0)';
+      _srchV.style.transform  = 'translateX(100%)';
+    }
+    if (_prevEl) _prevEl.style.transform = 'translateX(0)';
+    // Dim search icon
+    var _navSrc  = document.getElementById('nav-search');
+    var _navSrcI = document.getElementById('nav-search-icon');
+    if (_navSrc)  _navSrc.style.opacity  = '0.45';
+    if (_navSrcI) _navSrcI.style.stroke  = '#fff';
+    // Restore nav for previous view
+    var _navPro  = document.getElementById('nav-profile');
+    var _navCI   = document.getElementById('nav-chat-icon');
+    var _avBrd   = _navPro ? _navPro.querySelector('div') : null;
+    if (searchPreviousView === 'profile') {
+      if (_navPro)  _navPro.style.opacity        = '1';
+      if (_avBrd)   _avBrd.style.borderColor     = '#c0392b';
+    } else if (searchPreviousView === 'messages' || searchPreviousView === 'chat') {
+      if (_navCI)   _navCI.style.opacity          = '1';
+    } else if (searchPreviousView === 'saved') {
+      var _navSvd = document.getElementById('nav-saved');
+      var _navSvdI = document.getElementById('nav-saved-icon');
+      if (_navSvd)  _navSvd.style.opacity  = '1';
+      if (_navSvdI) _navSvdI.style.stroke  = '#c0392b';
+    }
+    currentView = searchPreviousView || 'profile';
+  }
+
   // -- Open chat for a specific contact --
   function openChat(fullName, creatorCode) {
     _currentChatName = fullName || '';
@@ -4161,6 +4330,121 @@
     initDeskResize();   /* wire up the drag-resize handle */
   }
 
+  // ── Desktop Search panel ──
+  function showDeskSearch() {
+    var p = document.getElementById('deskSearchPanel');
+    if (!p) return;
+    _closeDeskLists();
+    p.style.display = 'flex';
+    var inp = document.getElementById('deskSearchInput');
+    if (inp) { inp.value = ''; setTimeout(function() { inp.focus(); }, 80); }
+    var res = document.getElementById('deskSearchResults');
+    if (res) res.innerHTML = '<div style="padding:36px 14px;text-align:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p style="color:#333;font-size:13px;margin-top:11px;font-family:\'Inter\',sans-serif;">Search for creators or content</p></div>';
+  }
+  function _closeDeskSearch() {
+    var p = document.getElementById('deskSearchPanel');
+    if (p) p.style.display = 'none';
+  }
+  function handleDeskSearch(q) {
+    var res = document.getElementById('deskSearchResults');
+    if (!res) return;
+    q = (q || '').trim();
+    if (!q) {
+      res.innerHTML = '<div style="padding:36px 14px;text-align:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p style="color:#333;font-size:13px;margin-top:11px;font-family:\'Inter\',sans-serif;">Search for creators or content</p></div>';
+      return;
+    }
+    var ql = q.toLowerCase();
+    var matches = CONTACTS.filter(function(c) {
+      return c.name.toLowerCase().indexOf(ql) !== -1 || c.code.toLowerCase().indexOf(ql) !== -1;
+    });
+    if (!matches.length) {
+      res.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#3a3a3a;font-size:13px;font-family:\'Inter\',sans-serif;">No results for &ldquo;' + q + '&rdquo;</div>';
+      return;
+    }
+    res.innerHTML = matches.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      return '<div onclick="openDeskChat(\'' + c.name.replace(/'/g,"\\'") + '\',\'' + c.code + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" onmouseenter="this.style.background=\'#0a0a0a\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:13px;font-weight:600;color:#e0e0e0;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+          + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;letter-spacing:0.04em;">' + c.code + '</div>'
+        + '</div>'
+      + '</div>';
+    }).join('');
+  }
+
+  // ── Desktop My Lists panel ──
+  function showDeskLists() {
+    var p = document.getElementById('deskListsPanel');
+    if (!p) return;
+    _closeDeskSearch();
+    _renderDeskLists();
+    p.style.display = 'flex';
+  }
+  function _closeDeskLists() {
+    var p = document.getElementById('deskListsPanel');
+    if (p) p.style.display = 'none';
+  }
+  function _renderDeskLists() {
+    var grid = document.getElementById('deskListsGrid');
+    if (!grid) return;
+    var dynItems = (_savedDynamicItems || []).map(function(it) {
+      return { dataUrl: it.dataUrl, creator: it.creator, price: 0, bg: '#111' };
+    });
+    var staticItems = savedItemsMeta.map(function(it) {
+      return { dataUrl: null, creator: it.creator, price: it.price, bg: it.bg };
+    });
+    var all = dynItems.concat(staticItems);
+    if (!all.length) {
+      grid.innerHTML = '<div style="padding:40px 14px;text-align:center;color:#3a3a3a;font-size:13px;font-family:\'Inter\',sans-serif;">Your saved items will appear here</div>';
+      return;
+    }
+    grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2px;">'
+      + all.map(function(it) {
+        var inner = it.dataUrl
+          ? '<img src="' + it.dataUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+          : '';
+        var badge = it.price > 0
+          ? '<div style="position:absolute;top:5px;right:5px;background:rgba(192,57,43,0.9);border-radius:5px;padding:2px 5px;font-size:9px;font-weight:700;color:#fff;font-family:\'Inter\',sans-serif;">' + it.price + ' C</div>'
+          : '';
+        return '<div style="aspect-ratio:3/4;background:' + it.bg + ';position:relative;overflow:hidden;">'
+          + inner + badge
+          + '<div style="position:absolute;bottom:5px;left:6px;font-size:9px;color:#666;font-family:\'Inter\',sans-serif;">' + it.creator + '</div>'
+          + '</div>';
+      }).join('')
+      + '</div>';
+  }
+
+  // ── Mobile Search: filter through contacts ──
+  function handleSearch(q) {
+    var res = document.getElementById('searchResults');
+    if (!res) return;
+    q = (q || '').trim();
+    if (!q) {
+      res.innerHTML = '<div style="padding:48px 20px;text-align:center;"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#252525" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p style="color:#3a3a3a;font-size:14px;margin-top:14px;font-family:\'Inter\',sans-serif;">Search for creators or content</p></div>';
+      return;
+    }
+    var ql = q.toLowerCase();
+    var matches = CONTACTS.filter(function(c) {
+      return c.name.toLowerCase().indexOf(ql) !== -1 || c.code.toLowerCase().indexOf(ql) !== -1;
+    });
+    if (!matches.length) {
+      res.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#444;font-size:14px;font-family:\'Inter\',sans-serif;">No results for &ldquo;' + q + '&rdquo;</div>';
+      return;
+    }
+    res.innerHTML = '<div>' + matches.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      return '<div onclick="openChat(\'' + c.name.replace(/'/g,"\\'") + '\',\'' + c.code + '\')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" onmouseenter="this.style.background=\'#080808\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:14px;font-weight:600;color:#e8e8e8;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+          + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;margin-top:2px;letter-spacing:0.04em;">' + c.code + '</div>'
+        + '</div>'
+        + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'
+      + '</div>';
+    }).join('') + '</div>';
+  }
+
   // -- Copy creator code to clipboard --
   function copyCreatorCode() {
     var code = 'SlideInto.me/KGSYUS';
@@ -4467,6 +4751,7 @@
   var cloudPreviousView = 'chat';
   var savedPreviousView    = 'profile';
   var settingsPreviousView = 'profile';
+  var searchPreviousView   = 'profile';
 
   var cloud = {
     lists: ['Free', 'PPV'],
@@ -7023,6 +7308,12 @@
         return;                                  /* skip origSV on desktop */
       }
 
+      /* Search on desktop — open the in-panel search overlay */
+      if (desk && name === 'search') {
+        showDeskSearch();
+        return;
+      }
+
       /* Any other view on desktop — close all popups first */
       if (desk) {
         _closePopup('viewWallet',    'walletBackdrop');
@@ -7056,6 +7347,13 @@
     window.settingsGoBack = function() {
       if (window.innerWidth >= 768) { _closeSettings(); }
       else if (_origSGB) _origSGB.apply(this, arguments);
+    };
+
+    /* Search back — desktop: close in-panel overlay, mobile: slide back */
+    var _origSearchGB = window.searchGoBack;
+    window.searchGoBack = function() {
+      if (window.innerWidth >= 768) { _closeDeskSearch(); }
+      else if (_origSearchGB) _origSearchGB.apply(this, arguments);
     };
 
     /* Cloud button in saved header — desktop: close popup then open cloud; mobile: slide directly */
