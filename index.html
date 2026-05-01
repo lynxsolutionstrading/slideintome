@@ -1317,7 +1317,7 @@
         <!-- Balance area -->
         <div style="display:flex;align-items:center;gap:6px;padding:0 11px 0 10px;flex-shrink:0;">
           <img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:16px;height:16px;flex-shrink:0;">
-          <span id="slideKeyBalance" style="font-size:16px;font-weight:700;color:#fff;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;line-height:1;">30</span>
+          <span id="slideKeyBalance" style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;line-height:1;">30</span>
           <span style="font-size:9.5px;color:#484848;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">SK</span>
         </div>
 
@@ -1727,7 +1727,7 @@
   </div>
 
   <!-- GRID (only this scrolls, shows ~2 rows, scrollable to 6) -->
-  <div class="grid-scroll" style="flex:1; min-height:0; overflow-y:scroll; overflow-x:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; background:#000; overscroll-behavior:contain;">
+  <div class="grid-scroll" style="flex:1; min-height:0; overflow-y:scroll; overflow-x:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; background:#000; overscroll-behavior:contain; position:relative;">
     <div id="imageGrid" style="
       display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
       background:#000;
@@ -2611,6 +2611,47 @@
     ).join('');
   }
 
+  /* ── Shared parallel-slide transition (old slides out while new slides in) ── */
+  function _runGridSlide(scrollEl, oldGrid, dir, newHtml, onDone) {
+    var savedId = oldGrid.id;
+    var w = scrollEl.clientWidth || scrollEl.offsetWidth;
+    /* Pull old grid out of flow so it can slide away */
+    oldGrid.removeAttribute('id');
+    oldGrid.style.position = 'absolute';
+    oldGrid.style.top      = '0';
+    oldGrid.style.left     = '0';
+    oldGrid.style.width    = w + 'px';
+    oldGrid.style.zIndex   = '1';
+    oldGrid.style.transition = 'none';
+    /* Clone element (inherits grid CSS) and fill with new content, off-screen */
+    var newGrid = oldGrid.cloneNode(false);
+    newGrid.id             = savedId;
+    newGrid.innerHTML      = newHtml;
+    newGrid.style.zIndex   = '2';
+    newGrid.style.transform = 'translateX(' + (dir * 100) + '%)';
+    newGrid.style.transition = 'none';
+    scrollEl.appendChild(newGrid);
+    /* Force reflow so transition registers */
+    newGrid.getBoundingClientRect();
+    /* Slide both simultaneously — no gap, no black */
+    var T = 'transform 0.36s cubic-bezier(.4,0,.2,1)';
+    oldGrid.style.transition = T;
+    oldGrid.style.transform  = 'translateX(' + (-dir * 100) + '%)';
+    newGrid.style.transition = T;
+    newGrid.style.transform  = 'translateX(0)';
+    setTimeout(function() {
+      if (oldGrid.parentNode) oldGrid.parentNode.removeChild(oldGrid);
+      newGrid.style.position   = 'static';
+      newGrid.style.width      = '';
+      newGrid.style.top        = '';
+      newGrid.style.left       = '';
+      newGrid.style.zIndex     = '';
+      newGrid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.2s ease';
+      scrollEl.scrollTop = 0;
+      if (onDone) onDone();
+    }, 390);
+  }
+
   function switchTab(newTab) {
     if (newTab === currentTab || animating) return;
     animating = true;
@@ -2627,23 +2668,10 @@
     });
 
     const grid = document.getElementById('imageGrid');
-    grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-    grid.style.transform = `translateX(${-dir * 100}%)`;
-    grid.style.opacity = '0';
-
-    setTimeout(() => {
-      grid.style.transition = 'none';
-      grid.style.transform = `translateX(${dir * 100}%)`;
-      grid.innerHTML = buildGrid(newTab);
-      grid.getBoundingClientRect();
-      // Scroll back to top
-      grid.closest('div[style*="overflow-y"]').scrollTop = 0;
-      grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-      grid.style.transform = 'translateX(0)';
-      grid.style.opacity = '1';
+    _runGridSlide(grid.parentNode, grid, dir, buildGrid(newTab), function() {
       currentTab = newTab;
-      setTimeout(() => { animating = false; }, 340);
-    }, 240);
+      animating = false;
+    });
   }
 
   // ── Reusable toast ──
@@ -3624,46 +3652,32 @@
     }).join('');
   }
 
-  /* ── Switch tab in the desktop left panel (same slide animation as mobile) ── */
+  /* ── Switch tab in the desktop left panel — uses shared _runGridSlide ── */
   var _deskAnimating = false;
   function deskSwitchTab(tab) {
     if (tab === _deskCurrentTab || _deskAnimating) return;
     _deskAnimating = true;
     var _deskTabOrder = ['instagram','twitter','tiktok'];
-    var oldIdx = _deskTabOrder.indexOf(_deskCurrentTab);
-    var newIdx = _deskTabOrder.indexOf(tab);
-    var dir = newIdx > oldIdx ? 1 : -1;
+    var dir = _deskTabOrder.indexOf(tab) > _deskTabOrder.indexOf(_deskCurrentTab) ? 1 : -1;
     _deskCurrentTab = tab;
 
-    /* Update tab button styles */
     _deskTabOrder.forEach(function(t) {
       var btn = document.getElementById('dtab-' + t);
       if (btn) btn.classList.toggle('active', t === tab);
     });
 
     var grid = document.getElementById('deskImageGrid');
-    if (!grid) { _deskAnimating = false; return; }
+    var scrollEl = document.getElementById('deskGridScroll');
+    if (!grid || !scrollEl) { _deskAnimating = false; return; }
 
-    /* Slide current grid OUT */
-    grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-    grid.style.transform  = 'translateX(' + (-dir * 100) + '%)';
-    grid.style.opacity    = '0';
+    var tiles = tabTiles[tab] || tabTiles['instagram'];
+    var newHtml = tiles.map(function(bg) {
+      return '<div style="aspect-ratio:3/4;background:' + bg + ';"></div>';
+    }).join('');
 
-    setTimeout(function() {
-      /* Reposition off-screen on the other side, then build new content */
-      grid.style.transition = 'none';
-      grid.style.transform  = 'translateX(' + (dir * 100) + '%)';
-      deskBuildGrid(tab);
-      grid.getBoundingClientRect(); /* force reflow */
-      /* Scroll back to top */
-      var scroller = document.getElementById('deskGridScroll');
-      if (scroller) scroller.scrollTop = 0;
-      /* Slide new grid IN */
-      grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-      grid.style.transform  = 'translateX(0)';
-      grid.style.opacity    = '1';
-      setTimeout(function() { _deskAnimating = false; }, 340);
-    }, 240);
+    _runGridSlide(scrollEl, grid, dir, newHtml, function() {
+      _deskAnimating = false;
+    });
   }
 
   /* ── Open a chat in the right desktop panel ── */
