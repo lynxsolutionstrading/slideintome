@@ -4338,8 +4338,8 @@
   function _buildChipBarHTML() {
     // Two-level pattern: outer = scroll viewport, inner = natural-width row
     // This is the only layout that reliably triggers overflow-x on all browsers/mobile.
-    var s = '<div style="overflow-x:scroll;overflow-y:hidden;-webkit-overflow-scrolling:touch;'
-          + 'scrollbar-width:none;-ms-overflow-style:none;touch-action:pan-x;'
+    var s = '<div style="overflow-x:scroll;overflow-y:hidden;'
+          + 'scrollbar-width:none;-ms-overflow-style:none;'
           + 'background:#080808;border-bottom:1px solid #111;">';
     s += '<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;white-space:nowrap;">';
     // "+" create list button — always first/leftmost (always visible)
@@ -4887,28 +4887,22 @@
   // tracking the finger even when it moves outside the element.
   function _attachChipDrag(sc) {
     if (!sc) return;
-    var isDown = false, startX = 0, startSL = 0, moved = false, pid = null;
+    var active = false, startX = 0, startSL = 0, pid = null;
 
     sc.addEventListener('pointerdown', function(e) {
-      isDown = true; moved = false;
-      startX = e.clientX; startSL = sc.scrollLeft; pid = e.pointerId;
-      try { sc.setPointerCapture(e.pointerId); } catch(ex) {}
+      active = true;
+      startX = e.clientX;
+      startSL = sc.scrollLeft;
+      pid = e.pointerId;
     });
 
     sc.addEventListener('pointermove', function(e) {
-      if (!isDown || e.pointerId !== pid) return;
-      var dx = e.clientX - startX;
-      if (!moved && Math.abs(dx) > 5) moved = true;
-      if (moved) sc.scrollLeft = startSL - dx;
+      if (!active || e.pointerId !== pid) return;
+      sc.scrollLeft = startSL - (e.clientX - startX);
     });
 
-    sc.addEventListener('pointerup',     function(e) { if (e.pointerId === pid) isDown = false; });
-    sc.addEventListener('pointercancel', function(e) { if (e.pointerId === pid) isDown = false; });
-
-    // Swallow click on chips if the gesture was actually a drag, not a tap
-    sc.addEventListener('click', function(e) {
-      if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
-    }, true);
+    sc.addEventListener('pointerup',     function(e) { if (e.pointerId === pid) active = false; });
+    sc.addEventListener('pointercancel', function(e) { if (e.pointerId === pid) active = false; });
   }
 
   // ── Portrait lock via Screen Orientation API (where supported) ──
