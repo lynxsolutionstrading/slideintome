@@ -4349,13 +4349,19 @@
     s += '<button onclick="_selectListChip(\'all\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
       + (allAct ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
       + '">All</button>';
-    // Per-list chips — grow rightward, user scrolls to reach them
+    // Per-list chips — name (select) + ▼ (delete dropdown)
     _contactLists.forEach(function(lst) {
       var act = (_cListActive === lst.name);
       var esc = lst.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      s += '<button onclick="_selectListChip(\'' + esc + '\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
-        + (act ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
-        + '">' + _escHtml(lst.name) + '</button>';
+      var bg  = act ? 'background:#c0392b;' : 'background:#141414;border:1px solid #222;';
+      var col = act ? '#fff' : '#777';
+      var arrowCol = act ? 'rgba(255,255,255,0.65)' : '#444';
+      s += '<div style="flex-shrink:0;display:inline-flex;align-items:center;border-radius:20px;overflow:hidden;' + bg + 'white-space:nowrap;">'
+        + '<button onclick="_selectListChip(\'' + esc + '\')" style="padding:5px 6px 5px 13px;background:none;border:none;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;color:' + col + ';white-space:nowrap;outline:none;">' + _escHtml(lst.name) + '</button>'
+        + '<button onclick="event.stopPropagation();_openListDropdown(\'' + esc + '\',this)" style="padding:5px 9px 5px 2px;background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;outline:none;">'
+        + '<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3L5 7L8 3" stroke="' + arrowCol + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        + '</button>'
+        + '</div>';
     });
     s += '</div></div>';
     return s;
@@ -4568,6 +4574,46 @@
     _reRenderAssignModal();
     // If we're viewing this list, refresh the contact views
     if (_cListActive === listName) _refreshContactListViews();
+  }
+
+  // ── Delete list — dropdown + confirmation ──────────────────────────
+  var _ddListName = ''; // list name staged for deletion
+
+  function _openListDropdown(name, btn) {
+    _ddListName = name;
+    var dd = document.getElementById('chipDropdown');
+    if (!dd) return;
+    var r = btn.getBoundingClientRect();
+    dd.style.top  = (r.bottom + 5) + 'px';
+    dd.style.left = Math.max(4, r.left - 40) + 'px';
+    dd.style.display = 'block';
+    // Close when clicking anywhere else
+    setTimeout(function() {
+      document.addEventListener('pointerdown', _closeListDropdown, { once: true, capture: true });
+    }, 0);
+  }
+  function _closeListDropdown() {
+    var dd = document.getElementById('chipDropdown');
+    if (dd) dd.style.display = 'none';
+  }
+  function _confirmDeleteList() {
+    _closeListDropdown();
+    var modal = document.getElementById('deleteListModal');
+    var lbl   = document.getElementById('deleteListLabel');
+    if (!modal) return;
+    if (lbl) lbl.textContent = '„' + _ddListName + '“';
+    modal.style.display = 'flex';
+  }
+  function _cancelDeleteList() {
+    var modal = document.getElementById('deleteListModal');
+    if (modal) modal.style.display = 'none';
+  }
+  function _doDeleteList() {
+    _contactLists = _contactLists.filter(function(l) { return l.name !== _ddListName; });
+    if (_cListActive === _ddListName) _cListActive = 'all';
+    _cancelDeleteList();
+    _renderAllChipBars();
+    _refreshContactListViews();
   }
 
   // ── Mobile Search: filter through contacts ──
@@ -8837,6 +8883,26 @@
     <path d="M34 18 L38 22 L34 26" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
   <div style="color:#666;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;text-align:center;line-height:1.5;">Please rotate your device<br>to portrait mode</div>
+</div>
+
+<!-- ── Chip Dropdown (delete list) ── -->
+<div id="chipDropdown" style="display:none;position:fixed;z-index:99999;background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:4px 0;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.55);">
+  <button onclick="_confirmDeleteList()" style="width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#e55;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M5.5 6v4M8.5 6v4M3 3.5l.7 7.1a.5.5 0 00.5.4h5.6a.5.5 0 00.5-.4L11 3.5" stroke="#e55" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Liste löschen?
+  </button>
+</div>
+
+<!-- ── Delete List Confirmation Modal ── -->
+<div id="deleteListModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)_cancelDeleteList()">
+  <div style="background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:22px 20px 18px;width:270px;max-width:calc(100vw - 32px);text-align:center;">
+    <div style="font-size:15px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;margin-bottom:8px;letter-spacing:-0.01em;">Liste löschen?</div>
+    <div style="font-size:13px;color:#777;font-family:'Inter',sans-serif;margin-bottom:20px;line-height:1.5;">Die Liste <span id="deleteListLabel" style="color:#ccc;font-weight:600;"></span> wird unwiderruflich gelöscht.</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="_cancelDeleteList()" style="flex:1;padding:11px 0;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#aaa;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Abbrechen</button>
+      <button onclick="_doDeleteList()" style="flex:1;padding:11px 0;background:#c0392b;border:none;border-radius:10px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Ja</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Image Viewer Overlay ── -->
