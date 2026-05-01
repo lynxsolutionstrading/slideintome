@@ -4592,20 +4592,20 @@
       }
     }
 
-    function _nRow(p) {
-      return '<div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">'
+    function _nRow(p, pi) {
+      return '<div onclick="openNotifDetail('+pi+')" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;">'
         + _nAvatar(p)
-        + '<div style="flex:1;min-width:0;">'
+        + '<div style="flex:1;min-width:0;pointer-events:none;">'
         + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
         + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
         + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
         + '</div></div>';
     }
 
-    function _nRowNew(p) {
-      return '<div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;border-left:2px solid rgba(192,57,43,0.55);background:rgba(192,57,43,0.04);">'
+    function _nRowNew(p, pi) {
+      return '<div onclick="openNotifDetail('+pi+')" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #0f0f0f;border-left:2px solid rgba(192,57,43,0.55);background:rgba(192,57,43,0.04);">'
         + _nAvatar(p)
-        + '<div style="flex:1;min-width:0;">'
+        + '<div style="flex:1;min-width:0;pointer-events:none;">'
         + '<div style="font-size:11.5px;font-weight:700;color:#fff;margin-bottom:1px;">'+p.title+'</div>'
         + '<div style="font-size:11px;color:'+p.sc+';font-weight:600;margin-bottom:3px;">'+p.sub+'</div>'
         + '<div style="font-size:10.5px;color:#525252;line-height:1.5;">'+p.body+'</div>'
@@ -4614,7 +4614,7 @@
 
     function _nBatch(n) {
       var h = '';
-      for (var i = 0; i < n; i++) { h += _nRow(_NP[_ni % _NP.length]); _ni++; }
+      for (var i = 0; i < n; i++) { var pi = _ni % _NP.length; h += _nRow(_NP[pi], pi); _ni++; }
       return h;
     }
 
@@ -4653,17 +4653,14 @@
 
       var html = '';
       if (n > 0) {
-        /* New notifications section */
         html += _nNewHeader(n);
-        for (var i = 0; i < n; i++) { html += _nRowNew(_NP[_ni % _NP.length]); _ni++; }
-        /* Older divider + remaining rows to reach 20 total */
+        for (var i = 0; i < n; i++) { var pi = _ni % _NP.length; html += _nRowNew(_NP[pi], pi); _ni++; }
         var older = Math.max(0, 20 - n);
         if (older > 0) {
           html += _nOlderDivider();
-          for (var j = 0; j < older; j++) { html += _nRow(_NP[_ni % _NP.length]); _ni++; }
+          for (var j = 0; j < older; j++) { var pj = _ni % _NP.length; html += _nRow(_NP[pj], pj); _ni++; }
         }
       } else {
-        /* No unread — plain list, no separator */
         html = _nBatch(20);
       }
 
@@ -4673,18 +4670,61 @@
       sentinel.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:16px;min-height:56px;';
       list.appendChild(sentinel);
       list.scrollTop = 0;
-      /* Wire scroll once per list lifetime */
       if (!_nbound) {
         _nbound = true;
         list.addEventListener('scroll', function() {
           if (_nloading) return;
           var s = document.getElementById('notifSentinel');
           if (!s) return;
-          if (list.scrollTop + list.clientHeight >= list.scrollHeight - 50) {
-            _nLoadMore(list, s);
-          }
+          if (list.scrollTop + list.clientHeight >= list.scrollHeight - 50) { _nLoadMore(list, s); }
         }, { passive: true });
       }
+    };
+
+    /* ── Notification detail popup ── */
+    var _nTimes  = ['vor 2 Min.','vor 8 Min.','vor 25 Min.','vor 1 Std.','vor 3 Std.','vor 6 Std.','vor 1 Tag','vor 2 Tagen'];
+    var _nExtras = {
+      'user': 'Du kannst dich bedanken, indem du eine persönliche Nachricht sendest oder ebenfalls einen Tip schickst.',
+      'post': 'Besuche dein Profil um die vollständigen Statistiken zu deinem Post einzusehen.',
+      'pay':  'Die Transaktion wurde erfolgreich abgeschlossen. Dein Kontostand wurde sofort aktualisiert.',
+      'plat': 'Bei Fragen oder Problemen steht dir unser Support jederzeit zur Verfügung.'
+    };
+
+    window.openNotifDetail = function(pi) {
+      var p = _NP[pi];
+      if (!p) return;
+      var ov = document.getElementById('notifDetailOverlay');
+      if (!ov) return;
+      /* Avatar */
+      var avEl = document.getElementById('ndAvatar');
+      if (avEl) {
+        if (p.t === 'user') {
+          avEl.innerHTML = '<img src="'+p.img+'" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid #2a2a2a;">';
+        } else if (p.t === 'post') {
+          avEl.innerHTML = '<div style="width:68px;height:68px;border-radius:16px;overflow:hidden;border:2px solid #2a2a2a;"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover;"></div>';
+        } else if (p.t === 'pay') {
+          avEl.innerHTML = '<div style="width:68px;height:68px;border-radius:50%;background:#071a07;border:2px solid #27ae60;display:flex;align-items:center;justify-content:center;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>';
+        } else {
+          avEl.innerHTML = '<div style="width:68px;height:68px;border-radius:50%;background:#111;border:2px solid #2e2e2e;display:flex;align-items:center;justify-content:center;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>';
+        }
+      }
+      var lEl = document.getElementById('ndLabel'); if (lEl) lEl.textContent = p.title;
+      var sEl = document.getElementById('ndSub');   if (sEl) { sEl.textContent = p.sub; sEl.style.color = p.sc; }
+      var bEl = document.getElementById('ndBody');  if (bEl) bEl.textContent = p.body;
+      var eEl = document.getElementById('ndExtra'); if (eEl) eEl.textContent = _nExtras[p.t] || '';
+      var tEl = document.getElementById('ndTime');  if (tEl) tEl.textContent = _nTimes[pi % _nTimes.length];
+      ov.style.display = 'flex';
+      ov.style.opacity = '0';
+      ov.style.transition = 'opacity 0.18s ease';
+      requestAnimationFrame(function() { ov.style.opacity = '1'; });
+    };
+
+    window.closeNotifDetail = function() {
+      var ov = document.getElementById('notifDetailOverlay');
+      if (!ov) return;
+      ov.style.transition = 'opacity 0.15s ease';
+      ov.style.opacity = '0';
+      setTimeout(function() { ov.style.display = 'none'; }, 160);
     };
   })();
 
@@ -7774,6 +7814,26 @@
 
   </div><!-- /notifPanelContent -->
 </div><!-- /notifPanel -->
+
+<!-- ── Notification Detail Modal ── -->
+<div id="notifDetailOverlay" onclick="closeNotifDetail()" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.82);align-items:center;justify-content:center;padding:24px;">
+  <div onclick="event.stopPropagation()" style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:22px;width:100%;max-width:360px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,0.95);">
+    <!-- Body -->
+    <div style="padding:32px 24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <div id="ndAvatar" style="margin-bottom:18px;"></div>
+      <div id="ndLabel" style="font-size:10px;font-weight:700;color:#3a3a3a;letter-spacing:0.13em;text-transform:uppercase;margin-bottom:10px;"></div>
+      <div id="ndSub" style="font-size:16px;font-weight:700;line-height:1.35;margin-bottom:12px;max-width:280px;"></div>
+      <div id="ndBody" style="font-size:13px;color:#606060;line-height:1.65;margin-bottom:10px;max-width:270px;"></div>
+      <div style="width:32px;height:1px;background:#1a1a1a;margin:2px 0 10px;"></div>
+      <div id="ndExtra" style="font-size:11.5px;color:#363636;line-height:1.65;max-width:270px;"></div>
+      <div id="ndTime" style="font-size:10px;color:#282828;letter-spacing:0.06em;margin-top:14px;"></div>
+    </div>
+    <!-- Close button -->
+    <div style="padding:0 20px 22px;">
+      <button onclick="closeNotifDetail()" style="width:100%;padding:14px;background:#141414;border:1px solid #222;border-radius:13px;color:#666;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.01em;transition:background 0.15s,color 0.15s;" onmouseenter="this.style.background='#1c1c1c';this.style.color='#ccc'" onmouseleave="this.style.background='#141414';this.style.color='#666'">Schließen</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Image Viewer Overlay ── -->
 <div id="imgViewerOverlay" onclick="closeImgViewer()" style="display:none;position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,0.96);align-items:center;justify-content:center;cursor:zoom-out;">
