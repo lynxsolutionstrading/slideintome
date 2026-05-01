@@ -980,6 +980,9 @@
       /* Notification panel scrollbars */
       #notifList::-webkit-scrollbar,
       #notifSettingsList::-webkit-scrollbar { width: 3px; }
+      /* Drag handle — mobile only */
+      #notifDragHandle { display: flex; }
+      @media (min-width: 768px) { #notifDragHandle { display: none !important; } }
       #notifList::-webkit-scrollbar-track,
       #notifSettingsList::-webkit-scrollbar-track { background: transparent; }
       #notifList::-webkit-scrollbar-thumb,
@@ -4674,6 +4677,70 @@
     }
   };
 
+  /* ── Notification panel: mobile drag-to-close ── */
+  (function() {
+    var _nd = { active: false, startY: 0, curDy: 0 };
+
+    function _ndStart(y) {
+      if (window.innerWidth >= 768) return;
+      var panel = document.getElementById('notifPanel');
+      if (!panel || panel.style.display === 'none') return;
+      _nd.active = true;
+      _nd.startY = y;
+      _nd.curDy  = 0;
+      panel.style.transition = 'none';
+      panel.style.willChange = 'transform';
+    }
+    function _ndMove(y) {
+      if (!_nd.active) return;
+      var panel = document.getElementById('notifPanel');
+      if (!panel) return;
+      var dy = y - _nd.startY;
+      /* Only allow dragging UP (negative dy) */
+      _nd.curDy = Math.min(0, dy);
+      panel.style.transform = 'translateY(' + _nd.curDy + 'px)';
+    }
+    function _ndEnd() {
+      if (!_nd.active) return;
+      _nd.active = false;
+      var panel = document.getElementById('notifPanel');
+      if (!panel) return;
+      var panelH  = panel.offsetHeight || window.innerHeight;
+      var threshold = panelH * 0.30; /* 30% drag → snap closed */
+      if (-_nd.curDy >= threshold) {
+        /* Snap closed — animate the rest of the way up */
+        panel.style.transition = 'transform 0.28s cubic-bezier(0.42,0,0.18,1.0)';
+        panel.style.transform  = 'translateY(-100%)';
+        setTimeout(function() {
+          panel.style.display    = 'none';
+          panel.style.transform  = '';
+          panel.style.willChange = '';
+          /* Reset slider to page 1 */
+          var slider = document.getElementById('notifSlider');
+          if (slider) { slider.style.transition = 'none'; slider.style.transform = 'translateX(0)'; }
+        }, 300);
+      } else {
+        /* Snap back open */
+        panel.style.transition = 'transform 0.3s cubic-bezier(0.42,0,0.18,1.0)';
+        panel.style.transform  = 'translateY(0)';
+        setTimeout(function() { panel.style.willChange = ''; }, 320);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var handle = document.getElementById('notifDragHandle');
+      if (!handle) return;
+      handle.addEventListener('mousedown',  function(e) { _ndStart(e.clientY); e.preventDefault(); });
+      document.addEventListener('mousemove', function(e) { _ndMove(e.clientY); });
+      document.addEventListener('mouseup',   _ndEnd);
+      handle.addEventListener('touchstart',  function(e) { _ndStart(e.touches[0].clientY); }, { passive: true });
+      document.addEventListener('touchmove', function(e) {
+        if (_nd.active) { e.preventDefault(); _ndMove(e.touches[0].clientY); }
+      }, { passive: false });
+      document.addEventListener('touchend', _ndEnd);
+    });
+  })();
+
   // ── Call feature ─────────────────────────────────────────────────────────
   var _callSettings = { acceptCalls: false, minSlideKeys: 1 };
   var _DEMO_OTHER_MIN_SK = 2;   /* simulated minimum SK/sec of the other person */
@@ -7614,6 +7681,12 @@
       </div><!-- /page 2 -->
 
     </div><!-- /notifSlider -->
+
+    <!-- Mobile drag bar — grab & drag up to close -->
+    <div id="notifDragHandle" style="flex-shrink:0;align-items:center;justify-content:center;height:44px;padding-bottom:15px;cursor:grab;touch-action:none;background:#000;">
+      <div style="width:40px;height:4px;border-radius:2px;background:#2a2a2a;pointer-events:none;"></div>
+    </div>
+
   </div><!-- /notifPanelContent -->
 </div><!-- /notifPanel -->
 
