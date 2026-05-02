@@ -5188,15 +5188,17 @@
       startX = e.clientX;
       startSL = sc.scrollLeft;
       pid = e.pointerId;
+      try { sc.setPointerCapture(e.pointerId); } catch(err) {}
     });
 
     sc.addEventListener('pointermove', function(e) {
       if (!active || e.pointerId !== pid) return;
+      e.preventDefault();
       sc.scrollLeft = startSL - (e.clientX - startX);
-    });
+    }, { passive: false });
 
-    sc.addEventListener('pointerup',     function(e) { if (e.pointerId === pid) active = false; });
-    sc.addEventListener('pointercancel', function(e) { if (e.pointerId === pid) active = false; });
+    sc.addEventListener('pointerup',     function(e) { if (e.pointerId === pid) { active = false; try { sc.releasePointerCapture(e.pointerId); } catch(err) {} } });
+    sc.addEventListener('pointercancel', function(e) { if (e.pointerId === pid) { active = false; try { sc.releasePointerCapture(e.pointerId); } catch(err) {} } });
   }
 
   // ── Portrait lock via Screen Orientation API (where supported) ──
