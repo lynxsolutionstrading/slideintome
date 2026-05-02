@@ -3065,7 +3065,7 @@
       var _li = document.getElementById('listsSearchInput');
       if (_li) _li.value = '';
       _renderAllChipBars();
-      if (_lr) _renderMobileListsContacts(_getFilteredContacts(), _lr);
+      if (_lr) _renderMobileListsContacts(_getFilteredContacts('', _activeList.mobileListsChips), _lr, _activeList.mobileListsChips);
     } else if (name === 'saved') {
       var _pendingQ = _sfQueryOnOpen || '';
       _sfQueryOnOpen = null;
@@ -3701,7 +3701,8 @@
   function handleListsSearch(q) {
     var res = document.getElementById('listsResults');
     if (!res) return;
-    _renderMobileListsContacts(_getFilteredContacts((q || '').trim()), res);
+    var active = _activeList.mobileListsChips;
+    _renderMobileListsContacts(_getFilteredContacts((q || '').trim(), active), res, active);
   }
 
   // -- Open chat for a specific contact --
@@ -4293,9 +4294,10 @@
     _deskBtnInactive(_btns[1]);
   }
   /* ── Desktop: contacts list without badge (Messages mid panel) ── */
-  function _renderDeskContactList(list, container) {
+  function _renderDeskContactList(list, container, active) {
+    if (active === undefined) active = _activeList.deskMidChips;
     if (!list || !list.length) {
-      var emptyMsg = _cListActive === 'all' ? 'Keine Kontakte gefunden' : 'Keine Kontakte in dieser Liste';
+      var emptyMsg = active === 'all' ? 'Keine Kontakte gefunden' : 'Keine Kontakte in dieser Liste';
       container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;">' + emptyMsg + '</div>';
       return;
     }
@@ -4315,9 +4317,10 @@
   }
 
   /* ── Desktop: My Lists panel contacts WITH list-count badge ── */
-  function _renderDeskListsContacts(list, container) {
+  function _renderDeskListsContacts(list, container, active) {
+    if (active === undefined) active = _activeList.deskListsChips;
     if (!list || !list.length) {
-      var emptyMsg = _cListActive === 'all'
+      var emptyMsg = active === 'all'
         ? 'Keine Kontakte gefunden'
         : 'Diese Liste ist leer.<br>Wähle <b style="color:#888;">All</b> und füge Kontakte hinzu.';
       container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;line-height:1.7;">' + emptyMsg + '</div>';
@@ -4354,12 +4357,14 @@
   function _renderDeskLists() {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    _renderDeskListsContacts(_getFilteredContacts(), res);
+    var active = _activeList.deskListsChips;
+    _renderDeskListsContacts(_getFilteredContacts('', active), res, active);
   }
   function handleDeskListsFilter(q) {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    _renderDeskListsContacts(_getFilteredContacts((q || '').trim()), res);
+    var active = _activeList.deskListsChips;
+    _renderDeskListsContacts(_getFilteredContacts((q || '').trim(), active), res, active);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -4367,32 +4372,39 @@
   // ═══════════════════════════════════════════════════════════════
 
   var _contactLists = [];    // [{name:'Favorites', members:['CODE1','CODE2',...]}]
-  var _cListActive  = 'all'; // 'all' or list name string
+  // Per-bar active list state — each chip bar is independent
+  var _activeList = {
+    mobileListsChips: 'all',
+    mobileMsgsChips:  'all',
+    deskListsChips:   'all',
+    deskMidChips:     'all'
+  };
 
-  /* ── Build chip bar HTML ── */
-  function _buildChipBarHTML() {
+  /* ── Build chip bar HTML for a specific bar ── */
+  function _buildChipBarHTML(barId) {
+    var active = _activeList[barId] || 'all';
+    var bidEsc = barId.replace(/'/g,"\\'");
     // Two-level pattern: outer = scroll viewport, inner = natural-width row
-    // This is the only layout that reliably triggers overflow-x on all browsers/mobile.
     var s = '<div style="overflow-x:scroll;overflow-y:hidden;'
           + 'scrollbar-width:none;-ms-overflow-style:none;'
           + 'background:#080808;border-bottom:1px solid #111;">';
     s += '<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;white-space:nowrap;">';
-    // "+" create list button — always first/leftmost (always visible)
+    // "+" create list button — always first/leftmost
     s += '<button onclick="_showCreateListModal()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#141414;border:1px solid #222;color:#c0392b;font-size:18px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:\'Inter\',sans-serif;outline:none;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#222\'">+</button>';
     // All chip
-    var allAct = (_cListActive === 'all');
-    s += '<button onclick="_selectListChip(\'all\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
+    var allAct = (active === 'all');
+    s += '<button onclick="_selectListChip(\'all\',\'' + bidEsc + '\')" style="flex-shrink:0;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;outline:none;white-space:nowrap;transition:background 0.15s,color 0.15s;'
       + (allAct ? 'background:#c0392b;color:#fff;border:none;' : 'background:#141414;color:#777;border:1px solid #222;')
       + '">All</button>';
     // Per-list chips — name (select) + ▼ (delete dropdown)
     _contactLists.forEach(function(lst) {
-      var act = (_cListActive === lst.name);
+      var act = (active === lst.name);
       var esc = lst.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       var bg  = act ? 'background:#c0392b;' : 'background:#141414;border:1px solid #222;';
       var col = act ? '#fff' : '#777';
       var arrowCol = act ? 'rgba(255,255,255,0.65)' : '#444';
       s += '<div style="flex-shrink:0;display:inline-flex;align-items:center;border-radius:20px;overflow:hidden;' + bg + 'white-space:nowrap;">'
-        + '<button onclick="_selectListChip(\'' + esc + '\')" style="padding:5px 6px 5px 13px;background:none;border:none;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;color:' + col + ';white-space:nowrap;outline:none;">' + _escHtml(lst.name) + '</button>'
+        + '<button onclick="_selectListChip(\'' + esc + '\',\'' + bidEsc + '\')" style="padding:5px 6px 5px 13px;background:none;border:none;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:600;color:' + col + ';white-space:nowrap;outline:none;">' + _escHtml(lst.name) + '</button>'
         + '<button onclick="event.stopPropagation();_openListDropdown(\'' + esc + '\',this)" style="padding:5px 9px 5px 2px;background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;outline:none;">'
         + '<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3L5 7L8 3" stroke="' + arrowCol + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
         + '</button>'
@@ -4404,13 +4416,12 @@
 
   /* ── Render chip bars in all 4 locations + attach drag handler ── */
   function _renderAllChipBars() {
-    var html = _buildChipBarHTML();
     ['mobileListsChips','mobileMsgsChips','deskListsChips','deskMidChips'].forEach(function(id) {
       var wrap = document.getElementById(id);
       if (!wrap) return;
       // Save scroll position before innerHTML wipes it
       var prevSL = wrap.firstElementChild ? wrap.firstElementChild.scrollLeft : 0;
-      wrap.innerHTML = html;
+      wrap.innerHTML = _buildChipBarHTML(id);
       var sc = wrap.firstElementChild;
       // Restore scroll position so the bar stays where the user left it
       if (sc && prevSL) sc.scrollLeft = prevSL;
@@ -4418,21 +4429,63 @@
     });
   }
 
-  /* ── Select a chip ── */
-  function _selectListChip(name) {
-    _cListActive = name;
-    _renderAllChipBars();
-    _refreshContactListViews();
+  /* ── Re-render a single chip bar ── */
+  function _renderChipBar(barId) {
+    var wrap = document.getElementById(barId);
+    if (!wrap) return;
+    var prevSL = wrap.firstElementChild ? wrap.firstElementChild.scrollLeft : 0;
+    wrap.innerHTML = _buildChipBarHTML(barId);
+    var sc = wrap.firstElementChild;
+    if (sc && prevSL) sc.scrollLeft = prevSL;
+    _attachChipDrag(sc);
+  }
+
+  /* ── Select a chip — only updates that bar and its content area ── */
+  function _selectListChip(name, barId) {
+    _activeList[barId] = name;
+    _renderChipBar(barId);
+    _refreshBarContent(barId);
+  }
+
+  /* ── Refresh the content panel linked to one chip bar ── */
+  function _refreshBarContent(barId) {
+    var active = _activeList[barId] || 'all';
+    if (barId === 'mobileListsChips') {
+      var mlr = document.getElementById('listsResults');
+      if (mlr) _renderMobileListsContacts(_getFilteredContacts('', active), mlr, active);
+    } else if (barId === 'mobileMsgsChips') {
+      var msginp = document.getElementById('msgSearch');
+      if (!msginp || !msginp.value.trim()) {
+        var mcl = document.getElementById('msgContactList');
+        if (mcl) {
+          if (active === 'all') {
+            if (typeof window._contactsInit === 'function') window._contactsInit();
+          } else {
+            mcl.innerHTML = _filteredMsgContactsHTML(_getFilteredContacts('', active));
+          }
+        }
+      }
+    } else if (barId === 'deskListsChips') {
+      var dlr = document.getElementById('deskListsResults');
+      if (dlr) _renderDeskListsContacts(_getFilteredContacts('', active), dlr, active);
+    } else if (barId === 'deskMidChips') {
+      var deskinp = document.getElementById('deskSearch');
+      if (!deskinp || !deskinp.value.trim()) {
+        var dmc = document.getElementById('deskContactList');
+        if (dmc) _renderDeskContactList(_getFilteredContacts('', active), dmc, active);
+      }
+    }
   }
 
   /* ── Filter contacts by active list + optional search query ── */
-  function _getFilteredContacts(searchQ) {
+  function _getFilteredContacts(searchQ, active) {
+    if (active === undefined) active = 'all'; // safe fallback
     var q = (searchQ || '').trim().toLowerCase();
     var list = CONTACTS;
-    if (_cListActive !== 'all') {
+    if (active !== 'all') {
       var lst = null;
       for (var i = 0; i < _contactLists.length; i++) {
-        if (_contactLists[i].name === _cListActive) { lst = _contactLists[i]; break; }
+        if (_contactLists[i].name === active) { lst = _contactLists[i]; break; }
       }
       var members = lst ? lst.members : [];
       list = list.filter(function(c){ return members.indexOf(c.code) !== -1; });
@@ -4445,33 +4498,12 @@
     return list;
   }
 
-  /* ── Refresh all 4 contact views after list chip change ── */
+  /* ── Refresh all 4 contact views (used after membership changes) ── */
   function _refreshContactListViews() {
-    var filtered = _getFilteredContacts();
-    // Mobile My Lists
-    var mlr = document.getElementById('listsResults');
-    if (mlr) _renderMobileListsContacts(filtered, mlr);
-    // Mobile Messages (only if not actively searching)
-    var msginp = document.getElementById('msgSearch');
-    if (!msginp || !msginp.value.trim()) {
-      var mcl = document.getElementById('msgContactList');
-      if (mcl) {
-        if (_cListActive === 'all') {
-          if (typeof window._contactsInit === 'function') window._contactsInit();
-        } else {
-          mcl.innerHTML = _filteredMsgContactsHTML(filtered);
-        }
-      }
-    }
-    // Desktop Lists panel — with badge button
-    var dlr = document.getElementById('deskListsResults');
-    if (dlr) _renderDeskListsContacts(filtered, dlr);
-    // Desktop Mid (only if not actively searching)
-    var deskinp = document.getElementById('deskSearch');
-    if (!deskinp || !deskinp.value.trim()) {
-      var dmc = document.getElementById('deskContactList');
-      if (dmc) _renderDeskContactList(filtered, dmc);
-    }
+    _refreshBarContent('mobileListsChips');
+    _refreshBarContent('mobileMsgsChips');
+    _refreshBarContent('deskListsChips');
+    _refreshBarContent('deskMidChips');
   }
 
   /* ── Render contacts in Messages row style (for filtered list view) ── */
@@ -4499,9 +4531,10 @@
   }
 
   /* ── Render contacts in My Lists style (with list-count badge button) ── */
-  function _renderMobileListsContacts(list, container) {
+  function _renderMobileListsContacts(list, container, active) {
+    if (active === undefined) active = _activeList.mobileListsChips;
     if (!list || !list.length) {
-      var emptyMsg = _cListActive === 'all'
+      var emptyMsg = active === 'all'
         ? 'Keine Kontakte gefunden'
         : 'Diese Liste ist leer.<br>Wähle <b style="color:#888;">All</b> und tippe auf das Listen-Symbol um Kontakte hinzuzufügen.';
       container.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;line-height:1.7;">' + emptyMsg + '</div>';
@@ -4686,7 +4719,10 @@
   }
   function _doDeleteList() {
     _contactLists = _contactLists.filter(function(l) { return l.name !== _ddListName; });
-    if (_cListActive === _ddListName) _cListActive = 'all';
+    // Reset any bar that was showing the deleted list
+    ['mobileListsChips','mobileMsgsChips','deskListsChips','deskMidChips'].forEach(function(id) {
+      if (_activeList[id] === _ddListName) _activeList[id] = 'all';
+    });
     _cancelDeleteList();
     _renderAllChipBars();
     _refreshContactListViews();
