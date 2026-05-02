@@ -5639,7 +5639,8 @@
   function cloudSendFree(id) {
     var item = cloud.media.find(function(m){ return m.id === id; });
     if (!item) return;
-    _cspOpenPopup('free', id, null, item.mediaType || 'image');
+    cloudGoBack();   // close the cloud library popup
+    _cspOpenPopup('free', id, item.dataUrl, item.mediaType || 'image');
   }
 
   // ── Image viewer (sent images) ────────────────────────────────────────────
@@ -7096,7 +7097,9 @@
 
   window.cloudSendPaidOpen = function(id) {
     var item = cloud.media.find(function(m){ return m.id === id; });
-    _cspOpenPopup('paid', id, null, item ? (item.mediaType || 'image') : 'image');
+    if (!item) return;
+    cloudGoBack();   // close the cloud library popup
+    _cspOpenPopup('paid', id, item.dataUrl, item.mediaType || 'image');
   };
 
   window.closeCloudSendPopup = function() {
