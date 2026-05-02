@@ -4458,15 +4458,25 @@
     }).join('');
   }
 
-  /* ── Render contacts in My Lists style (with assign-to-list button) ── */
+  /* ── Render contacts in My Lists style (with list-count badge button) ── */
   function _renderMobileListsContacts(list, container) {
     if (!list || !list.length) {
-      container.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;">No contacts found</div>';
+      var emptyMsg = _cListActive === 'all'
+        ? 'Keine Kontakte gefunden'
+        : 'Diese Liste ist leer.<br>Wähle <b style="color:#888;">All</b> und tippe auf das Listen-Symbol um Kontakte hinzuzufügen.';
+      container.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#3a3a3a;font-size:14px;font-family:\'Inter\',sans-serif;line-height:1.7;">' + emptyMsg + '</div>';
       return;
     }
     container.innerHTML = list.map(function(c) {
       var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
       var esc = c.name.replace(/'/g,"\\'");
+      // Count how many lists this contact belongs to
+      var inCount = _contactLists.filter(function(l) { return l.members.indexOf(c.code) !== -1; }).length;
+      var btnBg     = inCount > 0 ? '#1f0808' : '#141414';
+      var btnBorder = inCount > 0 ? '#c0392b' : '#222';
+      var btnInner  = inCount > 0
+        ? '<span style="font-size:11px;font-weight:700;color:#c0392b;font-family:\'Inter\',sans-serif;line-height:1;">' + inCount + '</span>'
+        : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
       return '<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" onmouseenter="this.style.background=\'#080808\'" onmouseleave="this.style.background=\'transparent\'">'
         + '<div onclick="openChat(\'' + esc + '\',\'' + c.code + '\')" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;">'
           + '<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
@@ -4476,9 +4486,11 @@
           + '</div>'
         + '</div>'
         + '<button onclick="_showAssignModal(\'' + c.code + '\',\'' + esc + '\')" '
-          + 'style="flex-shrink:0;width:30px;height:30px;border-radius:8px;background:#141414;border:1px solid #1e1e1e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s,border-color 0.15s;" '
-          + 'onmouseenter="this.style.background=\'#1a0505\';this.style.borderColor=\'#c0392b\'" onmouseleave="this.style.background=\'#141414\';this.style.borderColor=\'#1e1e1e\'">'
-          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'
+          + 'title="Listen verwalten" '
+          + 'style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:' + btnBg + ';border:1px solid ' + btnBorder + ';display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s,border-color 0.15s;" '
+          + 'onmouseenter="this.style.background=\'#2a0808\';this.style.borderColor=\'#c0392b\'" '
+          + 'onmouseleave="this.style.background=\'' + btnBg + '\';this.style.borderColor=\'' + btnBorder + '\'">'
+          + btnInner
         + '</button>'
         + '</div>';
     }).join('');
@@ -4549,7 +4561,7 @@
   }
   function _reRenderAssignModal() {
     var title = document.getElementById('assignListTitle');
-    if (title) title.textContent = 'Add “' + _assignModalName + '” to list';
+    if (title) title.textContent = '„' + _assignModalName + '” in Listen';
     var content = document.getElementById('assignListContent');
     if (!content) return;
     if (!_contactLists.length) {
@@ -4578,9 +4590,8 @@
     var idx = lst.members.indexOf(code);
     if (idx === -1) lst.members.push(code);
     else lst.members.splice(idx, 1);
-    _reRenderAssignModal();
-    // If we're viewing this list, refresh the contact views
-    if (_cListActive === listName) _refreshContactListViews();
+    _reRenderAssignModal();       // update checkmarks live
+    _refreshContactListViews();   // always keep all views + badge counts in sync
   }
 
   // ── Delete list — dropdown + confirmation ──────────────────────────
@@ -8937,8 +8948,9 @@
       </button>
     </div>
     <div id="assignListContent" style="max-height:340px;overflow-y:auto;scrollbar-width:none;"></div>
-    <div style="padding:12px 18px;border-top:1px solid #1a1a1a;">
-      <button onclick="_hideAssignModal();setTimeout(_showCreateListModal,260)" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #252525;border-radius:10px;color:#c0392b;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background='#1a0505';this.style.borderColor='#c0392b'" onmouseleave="this.style.background='#1a1a1a';this.style.borderColor='#252525'">+ Create New List</button>
+    <div style="padding:12px 18px;border-top:1px solid #1a1a1a;display:flex;gap:10px;">
+      <button onclick="_hideAssignModal();setTimeout(_showCreateListModal,260)" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #252525;border-radius:10px;color:#666;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s,border-color 0.15s;" onmouseenter="this.style.background='#1a0505';this.style.borderColor='#c0392b';this.style.color='#c0392b'" onmouseleave="this.style.background='#1a1a1a';this.style.borderColor='#252525';this.style.color='#666'">+ Neue Liste</button>
+      <button onclick="_hideAssignModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#8b1010,#c0392b);border:none;border-radius:10px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:filter 0.15s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Fertig</button>
     </div>
   </div>
 </div>
