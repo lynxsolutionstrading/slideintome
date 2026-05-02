@@ -2608,10 +2608,15 @@
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 13px;background:#000;border-bottom:1px solid #141414;flex-shrink:0;">
       <span style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.02em;">Settings</span>
-      <button onclick="showView('cloud')" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid #252525;border-radius:20px;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#666;transition:border-color 0.18s,color 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#ddd'" onmouseleave="this.style.borderColor='#252525';this.style.color='#666'">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-        Cloud
-      </button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button onclick="showView('cloud')" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid #252525;border-radius:20px;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#666;transition:border-color 0.18s,color 0.18s;" onmouseenter="this.style.borderColor='#c0392b';this.style.color='#ddd'" onmouseleave="this.style.borderColor='#252525';this.style.color='#666'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          Cloud
+        </button>
+        <button id="settingsCloseBtn" onclick="if(window._closeSettings)window._closeSettings();else settingsGoBack();" style="display:none;width:32px;height:32px;border-radius:50%;background:#141414;border:1px solid #222;color:#888;font-size:18px;line-height:1;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s,color 0.15s;" onmouseenter="this.style.background='#1a0505';this.style.borderColor='#c0392b';this.style.color='#fff'" onmouseleave="this.style.background='#141414';this.style.borderColor='#222';this.style.color='#888'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Scrollable content -->
@@ -7851,6 +7856,16 @@
       if (s)  { s.style.display = 'none'; _clearPopupStyles(s); _deskUnfloatOverlay('viewSettings'); }
       if (bd)   bd.style.display = 'none';
     }
+    window._closeSettings = _closeSettings;
+
+    /* Show/hide the X button depending on viewport */
+    function _updateSettingsCloseBtn() {
+      var btn = document.getElementById('settingsCloseBtn');
+      if (!btn) return;
+      btn.style.display = window.innerWidth >= 768 ? 'flex' : 'none';
+    }
+    _updateSettingsCloseBtn();
+    window.addEventListener('resize', _updateSettingsCloseBtn);
 
     /* ── showView patch ── */
     var _origSV = window.showView;
