@@ -4692,6 +4692,84 @@
     _refreshContactListViews();
   }
 
+  // ── Add Contacts to List ──────────────────────────────────────────
+  var _addContactsPick = {}; // code → true/false (selected in picker)
+
+  function _openAddContacts() {
+    _closeListDropdown();
+    // Pre-select contacts already in this list
+    _addContactsPick = {};
+    var lst = null;
+    for (var i = 0; i < _contactLists.length; i++) {
+      if (_contactLists[i].name === _ddListName) { lst = _contactLists[i]; break; }
+    }
+    if (lst) {
+      lst.members.forEach(function(code) { _addContactsPick[code] = true; });
+    }
+    var modal = document.getElementById('addContactsModal');
+    var title = document.getElementById('addContactsTitle');
+    if (title) title.textContent = 'Kontakte zu „' + _ddListName + '"';
+    _reRenderAddContactsContent();
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function _reRenderAddContactsContent() {
+    var content = document.getElementById('addContactsContent');
+    if (!content) return;
+    content.innerHTML = CONTACTS.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      var esc = c.name.replace(/'/g,"\\'");
+      var sel = !!_addContactsPick[c.code];
+      var checkHTML = sel
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#c0392b"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;box-sizing:border-box;"></div>';
+      return '<div id="cpick_' + c.code + '" onclick="_toggleContactPick(\'' + c.code + '\')" '
+        + 'style="display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-bottom:1px solid #1a1a1a;transition:background 0.12s;background:' + (sel ? 'rgba(192,57,43,0.07)' : 'transparent') + ';">'
+        + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:13px;font-weight:600;color:#e0e0e0;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+          + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;letter-spacing:0.04em;">' + c.code + '</div>'
+        + '</div>'
+        + '<div class="cpick-box" style="flex-shrink:0;">' + checkHTML + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function _toggleContactPick(code) {
+    _addContactsPick[code] = !_addContactsPick[code];
+    var row = document.getElementById('cpick_' + code);
+    if (!row) return;
+    var sel = _addContactsPick[code];
+    row.style.background = sel ? 'rgba(192,57,43,0.07)' : 'transparent';
+    var box = row.querySelector('.cpick-box');
+    if (box) {
+      box.innerHTML = sel
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#c0392b"/><polyline points="8 12 11 15 16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #333;flex-shrink:0;box-sizing:border-box;"></div>';
+    }
+  }
+
+  function _cancelAddContacts() {
+    var modal = document.getElementById('addContactsModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function _confirmAddContacts() {
+    var lst = null;
+    for (var i = 0; i < _contactLists.length; i++) {
+      if (_contactLists[i].name === _ddListName) { lst = _contactLists[i]; break; }
+    }
+    if (lst) {
+      // Replace members with the full picked selection
+      lst.members = Object.keys(_addContactsPick).filter(function(code) {
+        return _addContactsPick[code];
+      });
+    }
+    _cancelAddContacts();
+    _refreshContactListViews();
+    _renderAllChipBars();
+  }
+
   // ── Mobile Search: filter through contacts ──
   function handleSearch(q) {
     var res = document.getElementById('searchResults');
@@ -9005,12 +9083,37 @@
   <div style="color:#666;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;text-align:center;line-height:1.5;">Please rotate your device<br>to portrait mode</div>
 </div>
 
-<!-- ── Chip Dropdown (delete list) ── -->
-<div id="chipDropdown" style="display:none;position:fixed;z-index:99999;background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:4px 0;min-width:148px;box-shadow:0 8px 24px rgba(0,0,0,0.55);">
+<!-- ── Chip Dropdown (list actions) ── -->
+<div id="chipDropdown" style="display:none;position:fixed;z-index:99999;background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:4px 0;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,0.55);">
+  <button onclick="_openAddContacts()" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='none'" style="width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#ccc;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background 0.12s;border-radius:7px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+    Kontakte hinzufügen
+  </button>
+  <div style="height:1px;background:#242424;margin:2px 8px;"></div>
   <button onclick="_confirmDeleteList()" onmouseenter="this.style.background='rgba(200,50,50,0.10)'" onmouseleave="this.style.background='none'" style="width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#e55;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background 0.12s;border-radius:7px;">
     <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M5.5 6v4M8.5 6v4M3 3.5l.7 7.1a.5.5 0 00.5.4h5.6a.5.5 0 00.5-.4L11 3.5" stroke="#e55" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Liste löschen?
   </button>
+</div>
+
+<!-- ── Add Contacts to List Modal ── -->
+<div id="addContactsModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)_cancelAddContacts()">
+  <div style="background:#111;border:1px solid #1e1e1e;border-radius:16px;width:100%;max-width:420px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.8);">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px 13px;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+      <div id="addContactsTitle" style="font-size:14px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;"></div>
+      <button onclick="_cancelAddContacts()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;margin-left:10px;" onmouseenter="this.style.background='#2a2a2a'" onmouseleave="this.style.background='#1a1a1a'">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#888" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <!-- Scrollable contact list -->
+    <div id="addContactsContent" style="flex:1;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#222 transparent;"></div>
+    <!-- Footer -->
+    <div style="padding:12px 16px;border-top:1px solid #1a1a1a;display:flex;gap:10px;flex-shrink:0;">
+      <button onclick="_cancelAddContacts()" style="flex:1;padding:11px 0;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#777;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='#222'" onmouseleave="this.style.background='#1a1a1a'">Abbrechen</button>
+      <button onclick="_confirmAddContacts()" style="flex:1;padding:11px 0;background:linear-gradient(135deg,#8b1010,#c0392b);border:none;border-radius:10px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:filter 0.15s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">Bestätigen</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Delete List Confirmation Modal ── -->
