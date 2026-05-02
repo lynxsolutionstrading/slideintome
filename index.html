@@ -961,12 +961,36 @@
       }
       #deskLeftToggle:hover { background: #0c0c0c; }
       #deskLeftToggle:hover .drk-grip circle { fill: #c0392b; }
+
+      /* ── Resize handle strip — right of contacts panel ── */
+      #deskMidToggle {
+        width: 10px;
+        flex-shrink: 0;
+        background: #020202;
+        border: none;
+        border-right: 1px solid #0e0e0e;
+        padding: 0;
+        cursor: col-resize;
+        display: none; /* shown only on desktop via media query */
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: background 0.18s;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #deskMidToggle:hover { background: #0c0c0c; }
+      #deskMidToggle:hover .drk-grip circle { fill: #c0392b; }
       .drk-grip circle { transition: fill 0.18s; }
+
+      @media (min-width: 768px) {
+        #deskMidToggle { display: flex; }
+      }
 
       /* ── MIDDLE: Contacts panel ── */
       #deskMid {
         width: 290px;
-        min-width: 270px;
+        min-width: 0;   /* JS controls clamping */
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -1556,6 +1580,17 @@
       <div id="deskContactList" style="flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#1c1c1c transparent;"></div>
 
     </div><!-- /deskMid -->
+
+    <!-- Drag-to-resize handle — right side of contacts panel -->
+    <div id="deskMidToggle" title="Ziehen zum Vergrößern / Verkleinern" aria-label="Contacts panel resize handle">
+      <svg class="drk-grip" width="4" height="20" viewBox="0 0 4 20" fill="none">
+        <circle cx="1.5" cy="2"  r="1.2" fill="#272727"/>
+        <circle cx="1.5" cy="6"  r="1.2" fill="#272727"/>
+        <circle cx="1.5" cy="10" r="1.2" fill="#272727"/>
+        <circle cx="1.5" cy="14" r="1.2" fill="#272727"/>
+        <circle cx="1.5" cy="18" r="1.2" fill="#272727"/>
+      </svg>
+    </div>
 
     <!-- ╔══════════════════════════════════╗
          RIGHT — Chat panel
@@ -4053,6 +4088,81 @@
     left.style.transition = '';
   }
 
+  /* ── Drag-to-resize: contacts (mid) panel handle ── */
+  var _deskMidResizeInited = false;
+
+  function initDeskMidResize() {
+    if (_deskMidResizeInited) return;
+    var handle = document.getElementById('deskMidToggle');
+    var mid    = document.getElementById('deskMid');
+    var crm    = document.getElementById('desktopCRM');
+    if (!handle || !mid || !crm) return;
+    _deskMidResizeInited = true;
+
+    var MIN_W     = 200;   // narrowest the contacts panel can get
+    var MAX_W     = 480;   // widest — leaves plenty of room for chat
+    var DEFAULT_W = 290;
+    var dragging  = false;
+    var startX    = 0;
+    var startW    = 0;
+
+    function clamp(w) {
+      return Math.max(MIN_W, Math.min(MAX_W, w));
+    }
+    function applyMidWidth(w, animate) {
+      var clamped = clamp(w);
+      mid.style.transition = animate ? 'width 0.22s cubic-bezier(0.42,0,0.18,1.0)' : 'none';
+      mid.style.width = clamped + 'px';
+      if (animate) setTimeout(function() { mid.style.transition = ''; }, 250);
+    }
+
+    /* ── Mouse ── */
+    handle.addEventListener('mousedown', function(e) {
+      dragging = true;
+      startX   = e.clientX;
+      startW   = mid.offsetWidth;
+      document.documentElement.style.cursor     = 'col-resize';
+      document.documentElement.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      applyMidWidth(startW + (e.clientX - startX), false);
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      dragging = false;
+      document.documentElement.style.cursor     = '';
+      document.documentElement.style.userSelect = '';
+      mid.style.transition = '';
+    });
+
+    /* ── Touch ── */
+    handle.addEventListener('touchstart', function(e) {
+      dragging = true;
+      startX   = e.touches[0].clientX;
+      startW   = mid.offsetWidth;
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      applyMidWidth(startW + (e.touches[0].clientX - startX), false);
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', function() {
+      if (!dragging) return;
+      dragging = false;
+    });
+
+    /* Set initial width */
+    applyMidWidth(DEFAULT_W, false);
+    mid.style.transition = '';
+  }
+
   /* ── Build / refresh desktop image grid ── */
   function deskBuildGrid(tab) {
     var grid = document.getElementById('deskImageGrid');
@@ -4215,7 +4325,8 @@
     if (window.innerWidth < 768) return;
     deskBuildGrid(_deskCurrentTab);
     _deskContactsInit();
-    initDeskResize();   /* wire up the drag-resize handle */
+    initDeskResize();      /* wire up the left-panel drag-resize handle */
+    initDeskMidResize();   /* wire up the contacts-panel drag-resize handle */
     _renderAllChipBars();
   }
 
