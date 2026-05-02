@@ -650,6 +650,14 @@
     .paid-bubble.unlocked .paid-dark-veil { opacity: 0; }
     .paid-bubble.unlocked .paid-lock-center { opacity: 0; }
     .paid-bubble.unlocked .paid-bar .sk-icon { filter: hue-rotate(100deg) saturate(1.4); }
+    /* Video variants for paid bubbles */
+    .paid-real-video { display: block; width: 100%; height: auto; }
+    .paid-blur-video {
+      position: absolute; inset: -12%; width: 124%; height: 124%;
+      object-fit: cover; pointer-events: none;
+      filter: blur(18px); transition: filter 2s ease;
+    }
+    .paid-bubble.unlocked .paid-blur-video { filter: blur(0); }
 
     /* ═══════════════════════
        DESKTOP
@@ -3156,13 +3164,14 @@
     paidCurrentId = id;
     var overlay  = document.getElementById('paidOverlay');
     var bg       = document.getElementById('paidBg');
+    var bgVid    = document.getElementById('paidBgVideo');
     var veil     = document.getElementById('paidVeil');
     var lockedUI = document.getElementById('paidLockedUI');
     var label    = document.getElementById('paidPriceLabel');
-    bg.src = item.img;
-    // Size card to match image natural aspect ratio
-    var _paidSizeCard = function() {
-      var r = bg.naturalWidth / bg.naturalHeight;
+    var isVideo  = item.mediaType === 'video';
+
+    function _paidSizeCard(w, h) {
+      var r = w / h;
       if (!r || r <= 0) return;
       var card = document.getElementById('paidCard');
       var maxW = window.innerWidth  * 0.95;
@@ -3170,15 +3179,30 @@
       var cardW, cardH;
       if (r > maxW / maxH) { cardW = maxW; cardH = maxW / r; }
       else                  { cardH = maxH; cardW = maxH * r; }
-      cardW = Math.round(cardW); cardH = Math.round(cardH);
-      card.style.setProperty('width',         cardW + 'px',  'important');
-      card.style.setProperty('height',        cardH + 'px',  'important');
-      card.style.setProperty('border-radius', '16px',        'important');
-      card.style.setProperty('position',      'relative',    'important');
-      card.style.setProperty('inset',         'auto',        'important');
-    };
-    bg.onload = _paidSizeCard;
-    if (bg.complete && bg.naturalWidth > 0) _paidSizeCard();
+      card.style.setProperty('width',         Math.round(cardW) + 'px', 'important');
+      card.style.setProperty('height',        Math.round(cardH) + 'px', 'important');
+      card.style.setProperty('border-radius', '16px',                   'important');
+      card.style.setProperty('position',      'relative',               'important');
+      card.style.setProperty('inset',         'auto',                   'important');
+    }
+
+    if (isVideo) {
+      bg.style.display = 'none';
+      bgVid.style.display = 'block';
+      bgVid.src = item.img;
+      bgVid.play().catch(function(){});
+      bgVid.addEventListener('loadedmetadata', function onMeta() {
+        bgVid.removeEventListener('loadedmetadata', onMeta);
+        _paidSizeCard(bgVid.videoWidth || 9, bgVid.videoHeight || 16);
+      }, { once: true });
+    } else {
+      if (bgVid) { bgVid.style.display = 'none'; bgVid.src = ''; bgVid.pause(); }
+      bg.style.display = '';
+      bg.src = item.img;
+      bg.onload = function() { _paidSizeCard(bg.naturalWidth, bg.naturalHeight); };
+      if (bg.complete && bg.naturalWidth > 0) _paidSizeCard(bg.naturalWidth, bg.naturalHeight);
+    }
+
     label.textContent = item.price + ' SlideKeys';
     var agreeAmt = document.getElementById('paidAgreementAmount');
     if (agreeAmt) agreeAmt.textContent = item.price + ' SlideKeys';
@@ -3191,10 +3215,11 @@
     if (wmUrl)  wmUrl.textContent = 'SlideInto.me/' + (codeEl ? codeEl.textContent : 'KGSYUS');
     if (wmId)   wmId.textContent  = item.contentId || '';
     overlay.style.display = 'flex';
+    var _activeBg = isVideo ? bgVid : bg;
     if (item.unlocked) {
-      bg.style.transition = 'none';
-      bg.style.filter     = 'blur(0px)';
-      bg.style.transform  = 'scale(1) translateZ(0)';
+      _activeBg.style.transition = 'none';
+      _activeBg.style.filter     = 'blur(0px)';
+      _activeBg.style.transform  = 'scale(1) translateZ(0)';
       veil.style.opacity  = '0';
       lockedUI.style.display = 'none';
       if (wmRight) wmRight.style.opacity = '1';
@@ -3202,15 +3227,14 @@
     } else {
       if (wmRight) wmRight.style.opacity = '0';
       if (wmLeft)  wmLeft.style.opacity  = '0';
-      // Reset agreement checkbox
       agreementChecked = false;
       var cb = document.getElementById('agreementCheckBox');
       var ci = document.getElementById('agreementCheckIcon');
       if (cb) { cb.style.background = 'rgba(0,0,0,0.45)'; cb.style.borderColor = 'rgba(192,57,43,0.45)'; }
       if (ci) ci.style.opacity = '0';
-      bg.style.transition = 'none';
-      bg.style.filter     = 'blur(22px)';
-      bg.style.transform  = 'scale(1.06) translateZ(0)'; // slightly zoomed — pulls back as it sharpens
+      _activeBg.style.transition = 'none';
+      _activeBg.style.filter     = 'blur(22px)';
+      _activeBg.style.transform  = 'scale(1.06) translateZ(0)';
       veil.style.opacity  = '0.45';
       lockedUI.style.display = 'flex';
       stuReset();
@@ -3667,11 +3691,14 @@
 
   /* ─── Reveal unlocked content ─────────────────────────────────────── */
   function stuRevealContent(id) {
-    var bg   = document.getElementById('paidBg');
-    var veil = document.getElementById('paidVeil');
-    bg.style.transition = 'filter 2s cubic-bezier(0.25,0,0.75,1), transform 2.4s cubic-bezier(0.25,0,0.75,1)';
-    bg.style.filter     = 'blur(0px)';
-    bg.style.transform  = 'scale(1) translateZ(0)';
+    var bg    = document.getElementById('paidBg');
+    var bgVid = document.getElementById('paidBgVideo');
+    var veil  = document.getElementById('paidVeil');
+    var item  = paidItems[id];
+    var _activeBg = (item && item.mediaType === 'video') ? bgVid : bg;
+    _activeBg.style.transition = 'filter 2s cubic-bezier(0.25,0,0.75,1), transform 2.4s cubic-bezier(0.25,0,0.75,1)';
+    _activeBg.style.filter     = 'blur(0px)';
+    _activeBg.style.transform  = 'scale(1) translateZ(0)';
     veil.style.transition = 'opacity 1.6s ease';
     veil.style.opacity    = '0';
     // 🎉 Confetti burst — fires as the image begins to reveal
@@ -5517,53 +5544,80 @@
     var remaining = 0;
     var accepted  = 0;
     var rejected  = [];
-    /* count only images */
-    Array.prototype.forEach.call(files, function(f) { if (f.type.match(/^image\//)) total++; });
+    var MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB
+    /* count images AND videos */
+    Array.prototype.forEach.call(files, function(f) {
+      if (f.type.match(/^image\//) || f.type.match(/^video\//)) total++;
+    });
     if (total === 0) return;
     remaining = total;
+
+    function _finish() {
+      cloudRender();
+      if (rejected.length > 0 && accepted > 0) {
+        showToast(accepted + ' hochgeladen · ' + rejected.length + ' abgelehnt', listName);
+      } else if (rejected.length > 0) {
+        showToast('Abgelehnt: ' + rejected[0], 'Upload');
+      } else {
+        var label = accepted + ' Datei' + (accepted!==1?'en':'') + ' hochgeladen!';
+        showToast(label, listName);
+      }
+    }
+
     Array.prototype.forEach.call(files, function(file) {
-      if (!file.type.match(/^image\//)) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var dataUrl = e.target.result;
-        _checkImgConstraints(dataUrl, function() {
-          /* PASS */
-          cloud.media.push({
-            id: cloud.nextId++,
-            dataUrl: dataUrl,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            listName: listName,
-            date: new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})
-          });
-          accepted++;
+      var isImage = !!file.type.match(/^image\//);
+      var isVideo = !!file.type.match(/^video\//);
+      if (!isImage && !isVideo) return;
+
+      if (isVideo) {
+        /* Videos: size check only, use blob URL (no base64 blowup) */
+        if (file.size > MAX_VIDEO_BYTES) {
+          rejected.push('zu groß (' + Math.round(file.size/1024/1024) + ' MB — max. 500 MB)');
           remaining--;
-          if (!remaining) {
-            cloudRender();
-            if (rejected.length > 0 && accepted > 0) {
-              showToast(accepted + ' hochgeladen · ' + rejected.length + ' abgelehnt', listName);
-            } else if (rejected.length > 0) {
-              showToast('Bild abgelehnt: ' + rejected[0], 'Upload');
-            } else {
-              showToast(accepted + ' Bild' + (accepted!==1?'er':'') + ' hochgeladen!', listName);
-            }
-          }
-        }, function(reason) {
-          /* FAIL */
-          rejected.push(reason);
-          remaining--;
-          if (!remaining) {
-            cloudRender();
-            if (accepted > 0) {
-              showToast(accepted + ' hochgeladen · ' + rejected.length + ' abgelehnt', listName);
-            } else {
-              showToast('Abgelehnt: ' + rejected[0], 'Upload');
-            }
-          }
+          if (!remaining) _finish();
+          return;
+        }
+        var blobUrl = URL.createObjectURL(file);
+        cloud.media.push({
+          id: cloud.nextId++,
+          dataUrl: blobUrl,
+          name: file.name,
+          type: file.type,
+          mediaType: 'video',
+          size: file.size,
+          listName: listName,
+          date: new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})
         });
-      };
-      reader.readAsDataURL(file);
+        accepted++;
+        remaining--;
+        if (!remaining) _finish();
+      } else {
+        /* Images: existing FileReader + dimension check */
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var dataUrl = e.target.result;
+          _checkImgConstraints(dataUrl, function() {
+            cloud.media.push({
+              id: cloud.nextId++,
+              dataUrl: dataUrl,
+              name: file.name,
+              type: file.type,
+              mediaType: 'image',
+              size: file.size,
+              listName: listName,
+              date: new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})
+            });
+            accepted++;
+            remaining--;
+            if (!remaining) _finish();
+          }, function(reason) {
+            rejected.push(reason);
+            remaining--;
+            if (!remaining) _finish();
+          });
+        };
+        reader.readAsDataURL(file);
+      }
     });
     // Reset input so same file can be re-selected
     document.getElementById('cloudFileInput').value = '';
@@ -5585,7 +5639,7 @@
   function cloudSendFree(id) {
     var item = cloud.media.find(function(m){ return m.id === id; });
     if (!item) return;
-    _cspOpenPopup('free', id, null);
+    _cspOpenPopup('free', id, null, item.mediaType || 'image');
   }
 
   // ── Image viewer (sent images) ────────────────────────────────────────────
@@ -5604,8 +5658,9 @@
   };
 
   // ── Chat Gallery pick ────────────────────────────────────────────────────
-  var _galleryImg = null;
-  var _galleryMsg = null;
+  var _galleryImg       = null;
+  var _galleryMsg       = null;
+  var _galleryMediaType = 'image'; // 'image' or 'video'
 
   window.openChatGallery = function() {
     var inp = document.getElementById('chatGalleryInput');
@@ -5618,45 +5673,73 @@
     inp.addEventListener('change', function() {
       var file = inp.files && inp.files[0];
       if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var dataUrl = e.target.result;
-        _checkImgConstraints(dataUrl, function() {
-          /* PASS — open combined popup immediately with loading animation */
-          _galleryImg = dataUrl;
-          _cspOpenPopup('free', null, null);   /* opens popup, hides preview section */
+      var isVideo = file.type.match(/^video\//);
 
-          /* Show preview section with spinner */
-          var prevSec  = document.getElementById('cspPreviewSection');
-          var prevImg  = document.getElementById('cspPreviewImg');
-          var prevLoad = document.getElementById('cspPreviewLoader');
-          var prevBadge = document.getElementById('cspPreviewBadge');
-          if (prevSec)   { prevSec.style.display = 'block'; }
-          if (prevLoad)  { prevLoad.style.display = 'flex'; }
-          if (prevImg)   { prevImg.style.opacity = '0'; prevImg.src = ''; }
-          if (prevBadge) { prevBadge.style.display = 'none'; }
+      if (isVideo) {
+        /* ── VIDEO path: blob URL, no dimension check, instant preview ── */
+        var blobUrl = URL.createObjectURL(file);
+        _galleryImg       = blobUrl;
+        _galleryMediaType = 'video';
+        _cspOpenPopup('free', null, null, 'video');
 
-          /* After 2 s: hide spinner and fade image in */
-          setTimeout(function() {
-            _csp.galleryDataUrl = dataUrl;   /* now available for send */
-            if (prevLoad) prevLoad.style.display = 'none';
-            if (prevImg) {
-              prevImg.src = dataUrl;
-              prevImg.style.transition = 'opacity 0.5s ease';
-              prevImg.style.opacity = '1';
-              /* remove transition so it doesn't interfere with re-opens */
-              setTimeout(function(){ if (prevImg) prevImg.style.transition = ''; }, 520);
-            }
-            if (prevBadge) prevBadge.style.display = 'flex';
-          }, 2000);
+        /* Show preview section immediately with video */
+        var prevSec  = document.getElementById('cspPreviewSection');
+        var prevVid  = document.getElementById('cspPreviewVideo');
+        var prevImg  = document.getElementById('cspPreviewImg');
+        var prevLoad = document.getElementById('cspPreviewLoader');
+        var prevBadge = document.getElementById('cspPreviewBadge');
+        if (prevSec)   { prevSec.style.display = 'block'; }
+        if (prevLoad)  { prevLoad.style.display = 'none'; }
+        if (prevImg)   { prevImg.style.display = 'none'; prevImg.src = ''; }
+        if (prevBadge) { prevBadge.style.display = 'none'; }
+        if (prevVid) {
+          prevVid.style.display = 'block';
+          prevVid.src = blobUrl;
+          prevVid.style.opacity = '1';
+          _csp.galleryDataUrl = blobUrl;
+        }
 
-        }, function(reason) {
-          /* FAIL */
-          showToast('Abgelehnt: ' + reason, 'Upload');
-        });
-      };
-      reader.readAsDataURL(file);
-      inp.value = ''; /* reset so same file can be re-selected */
+      } else {
+        /* ── IMAGE path: FileReader + dimension check + spinner ── */
+        _galleryMediaType = 'image';
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var dataUrl = e.target.result;
+          _checkImgConstraints(dataUrl, function() {
+            /* PASS */
+            _galleryImg = dataUrl;
+            _cspOpenPopup('free', null, null, 'image');
+
+            var prevSec  = document.getElementById('cspPreviewSection');
+            var prevImg  = document.getElementById('cspPreviewImg');
+            var prevVid  = document.getElementById('cspPreviewVideo');
+            var prevLoad = document.getElementById('cspPreviewLoader');
+            var prevBadge = document.getElementById('cspPreviewBadge');
+            if (prevSec)   { prevSec.style.display = 'block'; }
+            if (prevLoad)  { prevLoad.style.display = 'flex'; }
+            if (prevImg)   { prevImg.style.display = 'block'; prevImg.style.opacity = '0'; prevImg.src = ''; }
+            if (prevVid)   { prevVid.style.display = 'none'; prevVid.src = ''; }
+            if (prevBadge) { prevBadge.style.display = 'none'; }
+
+            setTimeout(function() {
+              _csp.galleryDataUrl = dataUrl;
+              if (prevLoad) prevLoad.style.display = 'none';
+              if (prevImg) {
+                prevImg.src = dataUrl;
+                prevImg.style.transition = 'opacity 0.5s ease';
+                prevImg.style.opacity = '1';
+                setTimeout(function(){ if (prevImg) prevImg.style.transition = ''; }, 520);
+              }
+              if (prevBadge) prevBadge.style.display = 'flex';
+            }, 2000);
+
+          }, function(reason) {
+            showToast('Abgelehnt: ' + reason, 'Upload');
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+      inp.value = '';
     });
   });
 
@@ -5704,9 +5787,9 @@
     if (!dataUrl) return;
     var msgInp = document.getElementById('cgMsgInput');
     var _savedMsg = ((msgInp || {}).value || '').trim();
-    closeChatGalleryPopup();   /* clears _galleryMsg — restore below */
+    closeChatGalleryPopup();
     _galleryMsg = _savedMsg;
-    _cspOpenPopup('free', null, dataUrl);
+    _cspOpenPopup('free', null, dataUrl, _galleryMediaType);
   };
 
   window.chatGallerySendPaidOpen = function() {
@@ -5714,9 +5797,9 @@
     if (!dataUrl) return;
     var msgInp = document.getElementById('cgMsgInput');
     var _savedMsg = ((msgInp || {}).value || '').trim();
-    closeChatGalleryPopup();   /* clears _galleryMsg — restore below */
+    closeChatGalleryPopup();
     _galleryMsg = _savedMsg;
-    _cspOpenPopup('paid', null, dataUrl);
+    _cspOpenPopup('paid', null, dataUrl, _galleryMediaType);
   };
 
   // ── Tip / Offer popup ────────────────────────────────────────────────────
@@ -6917,30 +7000,41 @@
   window.cspFilterContacts = function() { _cspRenderContacts(); };
 
   /* ── Common popup opener ─────────────────────────────────────────────── */
-  function _cspOpenPopup(mode, itemId, galleryDataUrl) {
+  function _cspOpenPopup(mode, itemId, galleryDataUrl, mediaType) {
     _csp.mode            = mode || 'free';
     _csp.itemId          = (itemId !== undefined) ? itemId : null;
     _csp.galleryDataUrl  = galleryDataUrl || null;
+    _csp.mediaType       = mediaType || 'image';
     _csp.selected        = {};
     _csp.allChecked      = { list: false, msg: false };
     _csp.tab             = 'list';
 
-    /* ── Preview section: show image if available, otherwise hide ── */
+    /* ── Preview section: show image or video if available ── */
     var prevSec   = document.getElementById('cspPreviewSection');
     var prevImg   = document.getElementById('cspPreviewImg');
+    var prevVid   = document.getElementById('cspPreviewVideo');
     var prevLoad  = document.getElementById('cspPreviewLoader');
     var prevBadge = document.getElementById('cspPreviewBadge');
+    var isVideo   = (_csp.mediaType === 'video');
     if (galleryDataUrl) {
-      /* Immediate display — cloud item or already-resolved dataUrl */
-      if (prevSec)   { prevSec.style.display = 'block'; }
-      if (prevLoad)  { prevLoad.style.display = 'none'; }
-      if (prevImg)   { prevImg.src = galleryDataUrl; prevImg.style.transition = ''; prevImg.style.opacity = '1'; }
-      if (prevBadge) { prevBadge.style.display = 'flex'; }
+      /* Immediate display — cloud item or already-resolved URL */
+      if (prevSec)  { prevSec.style.display = 'block'; }
+      if (prevLoad) { prevLoad.style.display = 'none'; }
+      if (isVideo) {
+        if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
+        if (prevVid) { prevVid.style.display = 'block'; prevVid.src = galleryDataUrl; prevVid.style.transition = ''; prevVid.style.opacity = '1'; }
+        if (prevBadge) prevBadge.style.display = 'none'; /* no zoom for video */
+      } else {
+        if (prevVid) { prevVid.style.display = 'none'; prevVid.src = ''; }
+        if (prevImg) { prevImg.style.display = 'block'; prevImg.src = galleryDataUrl; prevImg.style.transition = ''; prevImg.style.opacity = '1'; }
+        if (prevBadge) prevBadge.style.display = 'flex';
+      }
     } else {
-      /* No image yet (gallery loader will set it up separately) */
+      /* No media yet (gallery loader will set it up separately) */
       if (prevSec)   { prevSec.style.display = 'none'; }
       if (prevLoad)  { prevLoad.style.display = 'none'; }
-      if (prevImg)   { prevImg.src = ''; prevImg.style.opacity = '0'; }
+      if (prevImg)   { prevImg.style.display = 'block'; prevImg.src = ''; prevImg.style.opacity = '0'; }
+      if (prevVid)   { prevVid.style.display = 'none'; prevVid.src = ''; prevVid.style.opacity = '0'; }
       if (prevBadge) { prevBadge.style.display = 'none'; }
     }
 
@@ -7001,7 +7095,8 @@
   };
 
   window.cloudSendPaidOpen = function(id) {
-    _cspOpenPopup('paid', id, null);
+    var item = cloud.media.find(function(m){ return m.id === id; });
+    _cspOpenPopup('paid', id, null, item ? (item.mediaType || 'image') : 'image');
   };
 
   window.closeCloudSendPopup = function() {
@@ -7033,12 +7128,12 @@
         var balElF = document.getElementById('slideKeyBalance');
         if (balElF) balElF.textContent = _formatSK(_skBalance);
       }
-      var _freeImgUrl = _csp.galleryDataUrl || null;
-      if (!_freeImgUrl && _csp.itemId !== null) {
+      var _freeMediaUrl = _csp.galleryDataUrl || null;
+      if (!_freeMediaUrl && _csp.itemId !== null) {
         var _freeItem = cloud.media.find(function(m){ return m.id === _csp.itemId; });
-        if (_freeItem) _freeImgUrl = _freeItem.dataUrl;
+        if (_freeItem) _freeMediaUrl = _freeItem.dataUrl;
       }
-      if (_freeImgUrl) {
+      if (_freeMediaUrl) {
         var fNow  = new Date();
         var fTime = fNow.getHours().toString().padStart(2,'0') + ':' + fNow.getMinutes().toString().padStart(2,'0');
         var fMsg  = _cspMsg || '';
@@ -7051,19 +7146,22 @@
             '<img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:16px;height:16px;">' +
             '<span>Free</span>' +
           '</div>';
+        var _freeIsVideo = (_csp.mediaType === 'video');
+        var fMediaSent = _freeIsVideo
+          ? '<video src="' + _freeMediaUrl + '" controls muted playsinline style="display:block;width:100%;height:auto;max-height:280px;object-fit:cover;"></video>'
+          : '<img src="' + _freeMediaUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-preview-img" style="display:block;width:100%;height:auto;cursor:zoom-in;">';
+        var fMediaRecv = _freeIsVideo
+          ? '<video src="' + _freeMediaUrl + '" controls muted playsinline style="display:block;width:100%;height:auto;max-height:280px;object-fit:cover;"></video>'
+          : '<img src="' + _freeMediaUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-preview-img" style="display:block;width:100%;height:auto;cursor:zoom-in;">';
         var fSentHtml =
           '<span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">' + fTime + '</span>' +
           '<div style="background:#210606;border:1px solid #350a0a;border-radius:16px 16px 3px 16px;overflow:hidden;max-width:72%;">' +
-            '<img src="' + _freeImgUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-preview-img" style="display:block;width:100%;height:auto;cursor:zoom-in;">' +
-            _freeBar +
-            fMsgRow +
+            fMediaSent + _freeBar + fMsgRow +
           '</div>';
         var fRecvHtml =
           '<span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">' + fTime + '</span>' +
           '<div style="background:#141414;border:1px solid #1e1e1e;border-radius:16px 16px 16px 3px;overflow:hidden;max-width:72%;">' +
-            '<img src="' + _freeImgUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-preview-img" style="display:block;width:100%;height:auto;cursor:zoom-in;">' +
-            _freeBar +
-            fMsgRow +
+            fMediaRecv + _freeBar + fMsgRow +
           '</div>';
         ['chatScroll','deskChatScroll'].forEach(function(sid) {
           var scroll = document.getElementById(sid);
@@ -7080,9 +7178,10 @@
         });
         /* Auto-save to Saved Files */
         _savedDynamicItems.unshift({
-          dataUrl: _freeImgUrl,
+          dataUrl: _freeMediaUrl,
           creator: _currentChatName || 'Unknown',
           type: 'free',
+          mediaType: _csp.mediaType || 'image',
           ts: Date.now()
         });
         _csp.galleryDataUrl = null;
@@ -7113,16 +7212,17 @@
       if (balEl) balEl.textContent = _formatSK(_skBalance);
     }
 
-    var _imgDataUrl = _csp.galleryDataUrl || null;
-    if (!_imgDataUrl) {
+    var _mediaDataUrl  = _csp.galleryDataUrl || null;
+    var _paidMediaType = _csp.mediaType || 'image';
+    if (!_mediaDataUrl) {
       var item = cloud.media.find(function(m){ return m.id === _csp.itemId; });
-      if (item) _imgDataUrl = item.dataUrl;
+      if (item) { _mediaDataUrl = item.dataUrl; _paidMediaType = item.mediaType || 'image'; }
     }
-    if (_imgDataUrl) {
+    if (_mediaDataUrl) {
       var now  = new Date();
       var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
       var _cspDynId = 'dyn-' + Date.now();
-      paidItems[_cspDynId] = { price: price, unlocked: false, img: _imgDataUrl, contentId: '' };
+      paidItems[_cspDynId] = { price: price, unlocked: false, img: _mediaDataUrl, contentId: '', mediaType: _paidMediaType };
       ['chatScroll','deskChatScroll'].forEach(function(sid) {
         var scroll = document.getElementById(sid);
         if (!scroll) return;
@@ -7133,10 +7233,13 @@
           ? '<div style="padding:10px 14px 12px;font-size:13px;color:#e0e0e0;line-height:1.55;word-break:break-word;border-top:1px solid rgba(255,255,255,0.06);">'
               + _cspMsg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
           : '';
+        var _sentPreview = (_paidMediaType === 'video')
+          ? '<video src="' + _mediaDataUrl + '" muted playsinline controls style="display:block;max-width:100%;height:auto;max-height:280px;object-fit:cover;"></video>'
+          : '<img src="' + _mediaDataUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-paid-sent-img" style="display:block;max-width:100%;height:auto;object-fit:cover;cursor:zoom-in;">';
         sentDiv.innerHTML =
           '<span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">' + time + '</span>' +
           '<div style="background:#210606;border:1px solid #350a0a;border-radius:16px 16px 3px 16px;overflow:hidden;max-width:72%;">' +
-            '<img src="' + _imgDataUrl + '" onclick="openImgViewer(this.src);event.stopPropagation();" class="chat-paid-sent-img" style="display:block;max-width:100%;height:auto;object-fit:cover;cursor:zoom-in;">' +
+            _sentPreview +
             '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1a0404;border-top:1px solid #350a0a;">' +
               '<img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:16px;height:16px;">' +
               '<span style="font-size:12px;font-weight:700;color:#fff;flex:1;">' + _formatSK(price) + ' SlideKeys</span>' +
@@ -7145,14 +7248,19 @@
           '</div>';
         scroll.appendChild(sentDiv);
 
+        /* Receiver bubble — blurred until unlocked */
+        var _recvWrap = (_paidMediaType === 'video')
+          ? '<video class="paid-real-video" src="' + _mediaDataUrl + '" muted playsinline loop autoplay></video>' +
+            '<video class="paid-blur-video" src="' + _mediaDataUrl + '" muted playsinline loop autoplay></video>'
+          : '<img class="paid-real-img" src="' + _mediaDataUrl + '" alt="">' +
+            '<div class="paid-blur-img" style="background-image:url(\'' + _mediaDataUrl + '\');"></div>';
         var recvDiv = document.createElement('div');
         recvDiv.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:3px;';
         recvDiv.innerHTML =
           '<span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">' + time + '</span>' +
           '<div class="paid-bubble" data-paid-id="' + _cspDynId + '" onclick="openPaidContent(\'' + _cspDynId + '\')" style="border-radius:16px 16px 16px 3px;">' +
             '<div class="paid-img-wrap">' +
-              '<img class="paid-real-img" src="' + _imgDataUrl + '" alt="">' +
-              '<div class="paid-blur-img" style="background-image:url(\'' + _imgDataUrl + '\');"></div>' +
+              _recvWrap +
               '<div class="paid-dark-veil"></div>' +
               '<div class="paid-lock-center"><img src="Mockup/Slide_Logo.png" draggable="false" class="stu-lock-anim" style="width:140px;height:140px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(192,57,43,0.5));"></div>' +
             '</div>' +
@@ -7196,9 +7304,9 @@
           '</div>' +
           '<div>' +
             '<p style="font-size:14px;font-weight:600;color:#2a2a2a;margin:0 0 6px;">Nothing in ' + listLabel + '</p>' +
-            '<p style="font-size:12px;color:#1e1e1e;margin:0;line-height:1.6;">Upload images to share them<br/>directly in your chats.</p>' +
+            '<p style="font-size:12px;color:#1e1e1e;margin:0;line-height:1.6;">Lade Bilder & Videos hoch<br/>um sie direkt im Chat zu teilen.</p>' +
           '</div>' +
-          '<label for="cloudFileInput" style="padding:10px 22px;background:linear-gradient(135deg,#8b1010,#c0392b);border-radius:20px;color:#fff;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.02em;">Upload Images</label>' +
+          '<label for="cloudFileInput" style="padding:10px 22px;background:linear-gradient(135deg,#8b1010,#c0392b);border-radius:20px;color:#fff;font-family:\'Inter\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.02em;">Hochladen</label>' +
         '</div>';
       return;
     }
@@ -7218,11 +7326,17 @@
     // 3-col grid
     var gridHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;">';
     items.forEach(function(item) {
+      var isVideo = item.mediaType === 'video';
+      var mediaThumbnail = isVideo
+        ? '<video src="' + item.dataUrl + '" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;pointer-events:none;"></video>' +
+          '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;background:rgba(0,0,0,0.65);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">' +
+          '<svg width="10" height="12" viewBox="0 0 10 12" fill="white"><polygon points="0,0 10,6 0,12"/></svg></div>'
+        : '<img src="' + item.dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;">';
       gridHtml +=
         '<div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;cursor:pointer;background:#0e0e0e;" ' +
           'onmouseenter="this.querySelector(\'.cloud-ov\').style.display=\'flex\'" ' +
           'onmouseleave="this.querySelector(\'.cloud-ov\').style.display=\'none\'">' +
-          '<img src="' + item.dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;">' +
+          mediaThumbnail +
           '<div style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.75);border-radius:4px;padding:2px 6px;font-size:9px;color:#888;font-family:\'Inter\',sans-serif;font-weight:500;pointer-events:none;">' + item.listName + '</div>' +
           '<div class="cloud-ov" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.88);border-radius:6px;flex-direction:column;align-items:center;justify-content:center;gap:7px;z-index:2;padding:10px;">' +
             '<button onclick="cloudSendFree(' + item.id + ');event.stopPropagation();" style="width:86%;padding:9px 0;background:#1c1c1c;border:1px solid #2c2c2c;border-radius:8px;color:#c8c8c8;font-family:\'Inter\',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.02em;transition:background 0.12s;" onmouseenter="this.style.background=\'#262626\'" onmouseleave="this.style.background=\'#1c1c1c\'">Free Content</button>' +
@@ -8679,6 +8793,8 @@
         </div>
         <!-- Image — opacity starts at 0, fades to 1 after load -->
         <img id="cspPreviewImg" src="" draggable="false" style="display:block;width:100%;height:160px;object-fit:cover;cursor:zoom-in;opacity:0;" onclick="if(this.src)openImgViewer(this.src)">
+        <!-- Video preview — shown instead of img for video files -->
+        <video id="cspPreviewVideo" src="" style="display:none;width:100%;height:160px;object-fit:cover;opacity:0;" muted playsinline controls></video>
         <!-- Zoom badge — only shown when image is ready -->
         <div id="cspPreviewBadge" style="display:none;position:absolute;bottom:8px;right:10px;z-index:2;align-items:center;gap:5px;background:rgba(0,0,0,0.62);border-radius:6px;padding:4px 9px;pointer-events:none;">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -8779,6 +8895,7 @@
     <!-- Blurred background image + watermarks -->
     <div id="paidImageContainer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">
       <img id="paidBg" src="" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:filter 2s cubic-bezier(0.25,0,0.75,1),transform 2.4s cubic-bezier(0.25,0,0.75,1);filter:blur(22px);transform:scale(1.06) translateZ(0);">
+      <video id="paidBgVideo" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:filter 2s cubic-bezier(0.25,0,0.75,1),transform 2.4s cubic-bezier(0.25,0,0.75,1);filter:blur(22px);transform:scale(1.06) translateZ(0);" muted playsinline autoplay loop></video>
       <div id="paidVeil" style="position:absolute;inset:0;background:rgba(0,0,0,0.45);transition:opacity 1s ease;"></div>
 
       <div id="paidWmRight" style="position:absolute;bottom:20px;right:14px;z-index:5;opacity:0;transition:opacity 1s ease;pointer-events:none;">
@@ -8850,7 +8967,7 @@
 </div><!-- /paidOverlay -->
 
 <!-- ── Chat Gallery: hidden file input ── -->
-<input type="file" id="chatGalleryInput" accept="image/*" style="display:none;">
+<input type="file" id="chatGalleryInput" accept="image/*,video/*" style="display:none;">
 
 <!-- ── Chat Gallery: Free / Paid choice popup ── -->
 <div id="chatGalleryPopup" style="display:none;position:fixed;inset:0;z-index:99998;font-family:'Inter',-apple-system,sans-serif;align-items:center;justify-content:center;">
