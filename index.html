@@ -4292,9 +4292,11 @@
     var _btns = document.querySelectorAll('#deskFloatBtns button');
     _deskBtnInactive(_btns[1]);
   }
+  /* ── Desktop: contacts list without badge (Messages mid panel) ── */
   function _renderDeskContactList(list, container) {
     if (!list || !list.length) {
-      container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;">No contacts found</div>';
+      var emptyMsg = _cListActive === 'all' ? 'Keine Kontakte gefunden' : 'Keine Kontakte in dieser Liste';
+      container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;">' + emptyMsg + '</div>';
       return;
     }
     container.innerHTML = list.map(function(c) {
@@ -4311,15 +4313,53 @@
         + '</div>';
     }).join('');
   }
+
+  /* ── Desktop: My Lists panel contacts WITH list-count badge ── */
+  function _renderDeskListsContacts(list, container) {
+    if (!list || !list.length) {
+      var emptyMsg = _cListActive === 'all'
+        ? 'Keine Kontakte gefunden'
+        : 'Diese Liste ist leer.<br>Wähle <b style="color:#888;">All</b> und füge Kontakte hinzu.';
+      container.innerHTML = '<div style="padding:36px 14px;text-align:center;color:#333;font-size:13px;font-family:\'Inter\',sans-serif;line-height:1.7;">' + emptyMsg + '</div>';
+      return;
+    }
+    container.innerHTML = list.map(function(c) {
+      var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      var esc = c.name.replace(/'/g,"\\'");
+      var inCount = _contactLists.filter(function(l) { return l.members.indexOf(c.code) !== -1; }).length;
+      var btnBg     = inCount > 0 ? '#1f0808' : '#141414';
+      var btnBorder = inCount > 0 ? '#c0392b' : '#222';
+      var btnInner  = inCount > 0
+        ? '<span style="font-size:10px;font-weight:700;color:#c0392b;font-family:\'Inter\',sans-serif;line-height:1;">' + inCount + '</span>'
+        : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #0e0e0e;transition:background 0.15s;" onmouseenter="this.style.background=\'#0a0a0a\'" onmouseleave="this.style.background=\'transparent\'">'
+        + '<div onclick="openDeskChat(\'' + esc + '\',\'' + c.code + '\')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;">'
+          + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#666;font-family:\'Inter\',sans-serif;">' + ini + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+            + '<div style="font-size:13px;font-weight:600;color:#e0e0e0;font-family:\'Inter\',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name + '</div>'
+            + '<div style="font-size:11px;color:#555;font-family:\'Inter\',sans-serif;letter-spacing:0.04em;">' + c.code + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<button onclick="_showAssignModal(\'' + c.code + '\',\'' + esc + '\')" '
+          + 'title="Listen verwalten" '
+          + 'style="flex-shrink:0;width:28px;height:28px;border-radius:7px;background:' + btnBg + ';border:1px solid ' + btnBorder + ';display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s,border-color 0.15s;" '
+          + 'onmouseenter="this.style.background=\'#2a0808\';this.style.borderColor=\'#c0392b\'" '
+          + 'onmouseleave="this.style.background=\'' + btnBg + '\';this.style.borderColor=\'' + btnBorder + '\'">'
+          + btnInner
+        + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
   function _renderDeskLists() {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    _renderDeskContactList(_getFilteredContacts(), res);
+    _renderDeskListsContacts(_getFilteredContacts(), res);
   }
   function handleDeskListsFilter(q) {
     var res = document.getElementById('deskListsResults');
     if (!res) return;
-    _renderDeskContactList(_getFilteredContacts((q || '').trim()), res);
+    _renderDeskListsContacts(_getFilteredContacts((q || '').trim()), res);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -4423,9 +4463,9 @@
         }
       }
     }
-    // Desktop Lists panel
+    // Desktop Lists panel — with badge button
     var dlr = document.getElementById('deskListsResults');
-    if (dlr) _renderDeskContactList(filtered, dlr);
+    if (dlr) _renderDeskListsContacts(filtered, dlr);
     // Desktop Mid (only if not actively searching)
     var deskinp = document.getElementById('deskSearch');
     if (!deskinp || !deskinp.value.trim()) {
