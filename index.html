@@ -4709,14 +4709,29 @@
     var modal = document.getElementById('addContactsModal');
     var title = document.getElementById('addContactsTitle');
     if (title) title.textContent = 'Kontakte zu „' + _ddListName + '"';
-    _reRenderAddContactsContent();
+    var srch = document.getElementById('addContactsSearch');
+    if (srch) srch.value = '';
+    _reRenderAddContactsContent(CONTACTS);
     if (modal) modal.style.display = 'flex';
   }
 
-  function _reRenderAddContactsContent() {
+  function _filterAddContacts(q) {
+    q = (q || '').trim().toLowerCase();
+    var list = q ? CONTACTS.filter(function(c) {
+      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
+    }) : CONTACTS;
+    _reRenderAddContactsContent(list);
+  }
+
+  function _reRenderAddContactsContent(list) {
     var content = document.getElementById('addContactsContent');
     if (!content) return;
-    content.innerHTML = CONTACTS.map(function(c) {
+    var source = list || CONTACTS;
+    if (!source.length) {
+      content.innerHTML = '<div style="padding:32px 16px;text-align:center;color:#444;font-size:13px;font-family:\'Inter\',sans-serif;">Keine Kontakte gefunden</div>';
+      return;
+    }
+    content.innerHTML = source.map(function(c) {
       var ini = c.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
       var esc = c.name.replace(/'/g,"\\'");
       var sel = !!_addContactsPick[c.code];
@@ -9105,6 +9120,14 @@
       <button onclick="_cancelAddContacts()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;margin-left:10px;" onmouseenter="this.style.background='#2a2a2a'" onmouseleave="this.style.background='#1a1a1a'">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#888" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
+    </div>
+    <!-- Search bar -->
+    <div style="padding:10px 14px;border-bottom:1px solid #1a1a1a;flex-shrink:0;position:relative;">
+      <svg style="position:absolute;left:24px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="addContactsSearch" type="text" placeholder="Suchen…" autocomplete="off"
+        style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #222;border-radius:9px;padding:8px 10px 8px 30px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;outline:none;caret-color:#c0392b;transition:border-color 0.18s;"
+        onfocus="this.style.borderColor='#c0392b'" onblur="this.style.borderColor='#222'"
+        oninput="_filterAddContacts(this.value)">
     </div>
     <!-- Scrollable contact list -->
     <div id="addContactsContent" style="flex:1;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#222 transparent;"></div>
