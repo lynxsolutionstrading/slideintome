@@ -1702,14 +1702,19 @@
               <span style="font-size:13px;color:#c0c0c0;line-height:1.55;">Only for you 🔥 Unlock it 😘</span>
             </div>
           </div>
-          <!-- Free video -->
+          <!-- Paid video -->
           <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;">
             <span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">00:33 AM</span>
-            <div style="background:#141414;border:1px solid #1e1e1e;border-radius:16px 16px 16px 3px;overflow:hidden;max-width:72%;">
-              <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" controls muted playsinline style="display:block;width:100%;height:auto;max-height:260px;object-fit:cover;"></video>
+            <div class="paid-bubble" data-paid-id="pc2" onclick="openPaidContent('pc2')">
+              <div class="paid-img-wrap">
+                <video class="paid-real-video" src="Videos/1.mp4" muted playsinline loop autoplay></video>
+                <video class="paid-blur-video" src="Videos/1.mp4" muted playsinline loop autoplay></video>
+                <div class="paid-dark-veil"></div>
+                <div class="paid-lock-center"><img src="Mockup/Slide_Logo.png" draggable="false" class="stu-lock-anim" style="width:140px;height:140px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(192,57,43,0.5));"></div>
+              </div>
               <div class="paid-bar">
                 <img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:16px;height:16px;">
-                <span>Free</span>
+                <span>300 SlideKeys</span>
               </div>
             </div>
           </div>
@@ -2445,14 +2450,19 @@
         </div>
       </div>
 
-      <!-- RECV - Free video -->
+      <!-- RECV - Paid video -->
       <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;">
         <span style="font-size:9.5px;color:#484848;font-weight:500;letter-spacing:0.02em;">00:33 AM</span>
-        <div style="background:#141414;border:1px solid #1e1e1e;border-radius:16px 16px 16px 3px;overflow:hidden;max-width:72%;">
-          <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" controls muted playsinline style="display:block;width:100%;height:auto;max-height:260px;object-fit:cover;"></video>
+        <div class="paid-bubble" data-paid-id="pc2" onclick="openPaidContent('pc2')">
+          <div class="paid-img-wrap">
+            <video class="paid-real-video" src="Videos/1.mp4" muted playsinline loop autoplay></video>
+            <video class="paid-blur-video" src="Videos/1.mp4" muted playsinline loop autoplay></video>
+            <div class="paid-dark-veil"></div>
+            <div class="paid-lock-center"><img src="Mockup/Slide_Logo.png" draggable="false" class="stu-lock-anim" style="width:140px;height:140px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(192,57,43,0.5));"></div>
+          </div>
           <div class="paid-bar">
             <img class="sk-icon" src="Mockup/SlideKey.png" draggable="false" style="width:16px;height:16px;">
-            <span>Free</span>
+            <span>300 SlideKeys</span>
           </div>
         </div>
       </div>
@@ -3145,7 +3155,7 @@
   var paidCurrentId = null;
   var paidItems = {
     pc1: { price: 250, unlocked: false, img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=640&h=960&fit=crop&q=80', contentId: '#PMI893803932' },
-    pc2: { price: 150, unlocked: false, img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=640&h=960&fit=crop&q=80', contentId: '#PMI748291044' }
+    pc2: { price: 300, unlocked: false, img: 'Videos/1.mp4', contentId: '#PMV100000001', mediaType: 'video' }
   };
 
   function openPaidContent(id) {
