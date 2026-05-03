@@ -7925,26 +7925,28 @@
     el.style.zIndex   = '';
   }
 
-  /* ── Desktop: wallet / cloud / saved as centered popups ── */
+  /* ── Desktop: wallet / cloud / saved / settings as fullscreen overlays ── */
   (function() {
 
-    function _popupStyles(w, width, maxH) {
-      w.style.inset        = '';
-      w.style.top          = '50%';
-      w.style.left         = '50%';
-      w.style.right        = 'auto';
-      w.style.bottom       = 'auto';
-      w.style.transform    = 'translate(-50%,-50%)';
-      w.style.width        = width;
-      w.style.maxHeight    = maxH;
-      w.style.borderRadius = '14px';
-      w.style.border       = '1px solid #1e1e1e';
-      w.style.boxShadow    = '0 24px 80px rgba(0,0,0,0.96), 0 0 0 1px rgba(255,255,255,0.04)';
-      /* z-index is owned by _deskFloatOverlay (100000) — do not override here */
+    function _popupStyles(w) {
+      /* Fullscreen — _deskFloatOverlay already set position:fixed; inset:0.
+         Just make sure nothing shrinks it back to a floating card. */
+      w.style.inset        = '0';
+      w.style.top          = '0';
+      w.style.left         = '0';
+      w.style.right        = '0';
+      w.style.bottom       = '0';
+      w.style.transform    = 'none';
+      w.style.width        = '100%';
+      w.style.maxHeight    = '100%';
+      w.style.height       = '100%';
+      w.style.borderRadius = '0';
+      w.style.border       = 'none';
+      w.style.boxShadow    = 'none';
     }
 
     function _clearPopupStyles(w) {
-      ['top','left','right','bottom','transform','width','maxHeight',
+      ['top','left','right','bottom','transform','width','maxHeight','height',
        'borderRadius','border','boxShadow','inset'].forEach(function(p) {
         w.style[p] = '';
       });
@@ -7995,9 +7997,7 @@
         _deskFloatOverlay('viewWallet');
         _origSV.apply(this, arguments);          /* sets display:flex */
         var w = document.getElementById('viewWallet');
-        if (w) _popupStyles(w, '480px', '76vh');
-        var b = document.getElementById('walletBackdrop');
-        if (b) b.style.display = 'block';
+        if (w) _popupStyles(w);
         return;
       }
 
@@ -8007,18 +8007,14 @@
         _deskFloatOverlay('viewCloud');
         _origSV.apply(this, arguments);          /* sets display:flex */
         var c = document.getElementById('viewCloud');
-        if (c) _popupStyles(c, '672px', '82vh');
-        var cb = document.getElementById('cloudBackdrop');
-        if (cb) cb.style.display = 'block';
+        if (c) _popupStyles(c);
         return;
       }
 
       if (desk && name === 'saved') {
         _deskFloatOverlay('viewSavedFiles');
         var s = document.getElementById('viewSavedFiles');
-        if (s) { s.style.display = 'flex'; _popupStyles(s, '560px', '76vh'); }
-        var sb = document.getElementById('savedBackdrop');
-        if (sb) sb.style.display = 'block';
+        if (s) { s.style.display = 'flex'; _popupStyles(s); }
         // Consume pending query (set by openSavedFromChat) — single render, no timeout
         var _dPendingQ = _sfQueryOnOpen || '';
         _sfQueryOnOpen = null;
@@ -8045,10 +8041,8 @@
           settV.style.display    = 'flex';
           settV.style.transform  = 'none';    /* clear mobile transform */
           settV.style.transition = '';
-          _popupStyles(settV, '420px', '80vh');
+          _popupStyles(settV);
         }
-        var stBd = document.getElementById('settingsBackdrop');
-        if (stBd) stBd.style.display = 'block';
         return;                                  /* skip origSV on desktop */
       }
 
