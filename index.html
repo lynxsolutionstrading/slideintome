@@ -5160,7 +5160,11 @@
     const oldGrid  = document.getElementById('savedGrid');
     if (!oldGrid || !scroller) { animatingFilter = false; return; }
 
-    const w = scroller.clientWidth || scroller.offsetWidth;
+    const w = scroller.clientWidth  || scroller.offsetWidth;
+    const h = scroller.offsetHeight;
+
+    // Lock the container height so the popup can't collapse while both grids are position:absolute
+    scroller.style.minHeight = h + 'px';
 
     // Pull old grid out of normal flow so new one can sit beside it
     oldGrid.removeAttribute('id');
@@ -5216,6 +5220,7 @@
       newGrid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
       newGrid.style.transform  = '';
       newGrid.style.opacity    = '';
+      scroller.style.minHeight = '';   // release height lock
       scroller.scrollTop       = 0;
       currentFilter            = filterId;
       setTimeout(function() { animatingFilter = false; }, 50);
