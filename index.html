@@ -8452,13 +8452,22 @@
   window.openWalletTopup = function() {
     closeNoKeysPopup();
     var w = document.getElementById('viewWallet');
-    if (w && !w._tpFloated) {
-      w._tpFloated = true;
-      w._tpParent  = w.parentElement;
-      w._tpSibling = w.nextSibling;
-      document.body.appendChild(w);
+    if (w) {
+      if (!w._tpFloated) {
+        w._tpFloated = true;
+        w._tpParent  = w.parentElement;
+        w._tpSibling = w.nextSibling;
+        document.body.appendChild(w);
+      }
+      /* Always reapply — inset/position may have been cleared on close */
       w.style.position = 'fixed';
       w.style.inset    = '0';
+      w.style.top      = '0';
+      w.style.left     = '0';
+      w.style.right    = '0';
+      w.style.bottom   = '0';
+      w.style.width    = '100%';
+      w.style.height   = '100%';
       w.style.zIndex   = '100000';
     }
     showView('wallet');
