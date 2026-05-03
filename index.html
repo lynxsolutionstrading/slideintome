@@ -2011,7 +2011,7 @@
     </div>
 
     <!-- Saved grid (populated by JS) -->
-    <div id="savedScrollContainer" style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;background:#000;overscroll-behavior:contain;">
+    <div id="savedScrollContainer" style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;background:#000;overscroll-behavior:contain;position:relative;">
       <div id="savedGrid" style="transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.22s ease;"></div>
     </div>
   </div><!-- /viewSavedFiles -->
@@ -5041,8 +5041,8 @@
     [95,72],[118,61],[104,68],[126,59],[112,64],
   ];
 
-  function _renderSavedGrid(items, filter) {
-    const grid = document.getElementById('savedGrid');
+  function _renderSavedGrid(items, filter, targetEl) {
+    const grid = targetEl || document.getElementById('savedGrid');
     if (filter === 'audio') {
       grid.style.display = 'block';
       grid.style.gridTemplateColumns = '';
@@ -5068,7 +5068,7 @@
         grid.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#333;font-size:12px;font-weight:500;">No results</div>';
         return;
       }
-      _savedGridItems = items;   /* store for openSavedItem() */
+      if (!targetEl) _savedGridItems = items;   /* store for openSavedItem() only on real grid */
       grid.innerHTML = items.map(function(item, idx) {
         var bgCSS = item.dataUrl
           ? 'background:#111;background-image:url("' + item.dataUrl + '");background-size:cover;background-position:center;'
@@ -5147,7 +5147,7 @@
     const newIdx = filterOrder.indexOf(filterId);
     const dir    = newIdx > oldIdx ? 1 : -1;
 
-    // Update pill styles
+    // Update pill styles immediately
     ['sf-filter-videos','sf-filter-images','sf-filter-audio'].forEach(id => {
       const el     = document.getElementById(id);
       const active = el === btn;
@@ -5156,26 +5156,70 @@
       el.style.fontWeight = active ? '600' : '500';
     });
 
-    const grid     = document.getElementById('savedGrid');
     const scroller = document.getElementById('savedScrollContainer');
+    const oldGrid  = document.getElementById('savedGrid');
+    if (!oldGrid || !scroller) { animatingFilter = false; return; }
 
-    // Slide current content out
-    grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-    grid.style.transform  = `translateX(${-dir * 100}%)`;
-    grid.style.opacity    = '0';
+    const w = scroller.clientWidth || scroller.offsetWidth;
 
-    setTimeout(() => {
-      grid.style.transition = 'none';
-      grid.style.transform  = `translateX(${dir * 100}%)`;
-      buildSavedContent(filterId);
-      grid.getBoundingClientRect();
-      scroller.scrollTop = 0;
-      grid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
-      grid.style.transform  = 'translateX(0)';
-      grid.style.opacity    = '1';
-      currentFilter = filterId;
-      setTimeout(() => { animatingFilter = false; }, 340);
-    }, 240);
+    // Pull old grid out of normal flow so new one can sit beside it
+    oldGrid.removeAttribute('id');
+    oldGrid.style.position   = 'absolute';
+    oldGrid.style.top        = '0';
+    oldGrid.style.left       = '0';
+    oldGrid.style.width      = w + 'px';
+    oldGrid.style.zIndex     = '1';
+    oldGrid.style.transition = 'none';
+    oldGrid.style.opacity    = '1';
+    oldGrid.style.transform  = 'translateX(0)';
+
+    // Build filtered items for the incoming tab
+    _sfCurrentFilter = filterId;
+    const q = ((document.getElementById('sfCreatorSearch') || {}).value || '').trim().toLowerCase();
+    var _dyn = (_savedDynamicItems || []).map(function(it) {
+      return { dataUrl: it.dataUrl, creator: it.creator, price: 0, type: 'free', bg: '#111' };
+    });
+    var _sta = (savedItemsMeta || []).map(function(it) {
+      return { dataUrl: null, creator: it.creator, price: it.price, type: it.price === 0 ? 'free' : 'paid', bg: it.bg };
+    });
+    var _all = _dyn.concat(_sta);
+    if (_sfTypeFilter !== 'all') _all = _all.filter(function(it) { return it.type === _sfTypeFilter; });
+    if (q) _all = _all.filter(function(it) { return it.creator.toLowerCase().indexOf(q) !== -1; });
+
+    // Clone old grid element (inherits CSS), fill with new content, start off-screen
+    const newGrid = oldGrid.cloneNode(false);
+    newGrid.id               = 'savedGrid';
+    newGrid.style.zIndex     = '2';
+    newGrid.style.transform  = 'translateX(' + (dir * 100) + '%)';
+    newGrid.style.transition = 'none';
+    newGrid.style.opacity    = '1';
+    _renderSavedGrid(_all, filterId, newGrid);
+    scroller.appendChild(newGrid);
+
+    // Force reflow so transitions register
+    newGrid.getBoundingClientRect();
+
+    // Slide both simultaneously — no gap, no black flash
+    const T = 'transform 0.36s cubic-bezier(.4,0,.2,1)';
+    oldGrid.style.transition = T;
+    oldGrid.style.transform  = 'translateX(' + (-dir * 100) + '%)';
+    newGrid.style.transition = T;
+    newGrid.style.transform  = 'translateX(0)';
+
+    setTimeout(function() {
+      if (oldGrid.parentNode) oldGrid.parentNode.removeChild(oldGrid);
+      newGrid.style.position   = 'static';
+      newGrid.style.width      = '';
+      newGrid.style.top        = '';
+      newGrid.style.left       = '';
+      newGrid.style.zIndex     = '';
+      newGrid.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.22s ease';
+      newGrid.style.transform  = '';
+      newGrid.style.opacity    = '';
+      scroller.scrollTop       = 0;
+      currentFilter            = filterId;
+      setTimeout(function() { animatingFilter = false; }, 50);
+    }, 390);
   }
 
   // Init saved grid on load
